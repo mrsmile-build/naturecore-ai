@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>Nature Core</title>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      font-family:Arial, sans-serif;
+      background:#0f172a;
+      color:white;
+      padding:20px;
+    }
+
+    header{
+      text-align:center;
+      margin-bottom:30px;
+    }
+
+    header h1{
+      color:#22c55e;
+      font-size:40px;
+      margin-bottom:10px;
+    }
+
+    header p{
+      color:#cbd5e1;
+      font-size:18px;
+    }
+
+    .search-box{
+      display:flex;
+      justify-content:center;
+      margin-bottom:30px;
+    }
+
+    .search-box input{
+      width:100%;
+      max-width:500px;
+      padding:15px;
+      border:none;
+      border-radius:12px;
+      font-size:16px;
+      outline:none;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:20px;
+    }
+
+    .card{
+      background:#1e293b;
+      border-radius:20px;
+      padding:20px;
+      transition:0.3s;
+      box-shadow:0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .card:hover{
+      transform:translateY(-5px);
+    }
+
+    .card h2{
+      color:#22c55e;
+      margin-bottom:10px;
+    }
+
+    .scientific{
+      color:#94a3b8;
+      font-style:italic;
+      margin-bottom:15px;
+    }
+
+    .tags{
+      margin-bottom:15px;
+    }
+
+    .tag{
+      display:inline-block;
+      background:#334155;
+      padding:6px 12px;
+      border-radius:20px;
+      margin:5px 5px 0 0;
+      font-size:13px;
+    }
+
+    .benefits{
+      margin-top:15px;
+    }
+
+    .benefits h4{
+      margin-bottom:10px;
+      color:#f8fafc;
+    }
+
+    .benefit{
+      background:#14532d;
+      color:#dcfce7;
+      padding:6px 10px;
+      border-radius:15px;
+      margin:5px 5px 0 0;
+      display:inline-block;
+      font-size:13px;
+    }
+
+    .loading{
+      text-align:center;
+      margin-top:50px;
+      font-size:20px;
+      color:#cbd5e1;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>Nature Core</h1>
+
+    <p>
+      Discover the power of nature:
+      herbs, roots, leaves, foods, and medicinal plants.
+    </p>
+  </header>
+
+  <div class="search-box">
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Search for neem, ginger, immune..."
+    />
+  </div>
+
+  <div class="loading" id="loading">
+    Loading Nature Data...
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <script>
+
+    const API_URL =
+      "https://nature-core.onrender.com/nature";
+
+    const cardsContainer =
+      document.getElementById("cards");
+
+    const loading =
+      document.getElementById("loading");
+
+    const searchInput =
+      document.getElementById("searchInput");
+
+    async function loadNature(search = "") {
+
+      loading.style.display = "block";
+
+      cardsContainer.innerHTML = "";
+
+      try {
+
+        const response = await fetch(
+          search
+            ? `${API_URL}?search=${search}`
+            : API_URL
+        );
+
+        const data = await response.json();
+
+        loading.style.display = "none";
+
+        if(data.length === 0){
+
+          cardsContainer.innerHTML = `
+            <p>No results found.</p>
+          `;
+
+          return;
+        }
+
+        data.forEach(item => {
+
+          const card = document.createElement("div");
+
+          card.className = "card";
+
+          card.innerHTML = `
+
+            <h2>${item.name}</h2>
+
+            <p class="scientific">
+              ${item.scientificName}
+            </p>
+
+            <div class="tags">
+              <span class="tag">${item.type}</span>
+              <span class="tag">${item.category}</span>
+            </div>
+
+            <div class="benefits">
+
+              <h4>Benefits</h4>
+
+              ${item.benefits.map(benefit => `
+                <span class="benefit">
+                  ${benefit}
+                </span>
+              `).join("")}
+
+            </div>
+          `;
+
+          cardsContainer.appendChild(card);
+
+        });
+
+      } catch(error){
+
+        loading.innerHTML =
+          "Failed to load Nature Core API.";
+
+        console.error(error);
+      }
+    }
+
+    searchInput.addEventListener("input", (e) => {
+      loadNature(e.target.value);
+    });
+
+    loadNature();
+
+  </script>
+
+</body>
+</html>
