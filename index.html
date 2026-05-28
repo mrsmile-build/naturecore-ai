@@ -1,202 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Nature Core AI</title>
 
 <style>
 
 *{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
+margin:0;
+padding:0;
+box-sizing:border-box;
 }
 
 body{
-  font-family:Arial,sans-serif;
-  background:#0f172a;
-  color:white;
-  min-height:100vh;
+font-family:Arial,sans-serif;
+background:#020617;
+color:white;
+padding:20px;
 }
 
 header{
-  padding:30px 20px;
-  text-align:center;
+text-align:center;
+margin-top:30px;
+margin-bottom:40px;
 }
 
 header h1{
-  font-size:42px;
-  color:#22c55e;
-  margin-bottom:10px;
+font-size:50px;
+color:#22c55e;
+margin-bottom:10px;
 }
 
 header p{
-  color:#cbd5e1;
-  max-width:700px;
-  margin:auto;
-  line-height:1.6;
-}
-
-.hero{
-  padding:20px;
-  display:flex;
-  justify-content:center;
+color:#cbd5e1;
+max-width:700px;
+margin:auto;
+line-height:1.6;
 }
 
 .search-box{
-  width:100%;
-  max-width:700px;
-  background:#1e293b;
-  border-radius:20px;
-  padding:15px;
-  box-shadow:0 0 25px rgba(0,0,0,0.3);
+max-width:700px;
+margin:30px auto;
+background:#1e293b;
+padding:14px;
+border-radius:20px;
 }
 
 .search-box input{
-  width:100%;
-  padding:18px;
-  border:none;
-  border-radius:15px;
-  background:#0f172a;
-  color:white;
-  font-size:16px;
-  outline:none;
+width:100%;
+padding:18px;
+border:none;
+outline:none;
+border-radius:14px;
+background:#0f172a;
+color:white;
+font-size:16px;
 }
 
 .stats{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:20px;
-  padding:20px;
-  max-width:1100px;
-  margin:auto;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+margin:40px 0;
 }
 
 .stat-card{
-  background:#1e293b;
-  padding:25px;
-  border-radius:20px;
-  text-align:center;
+background:#1e293b;
+padding:30px;
+border-radius:20px;
+text-align:center;
 }
 
 .stat-card h2{
-  color:#22c55e;
-  font-size:32px;
+font-size:40px;
+color:#22c55e;
 }
 
 .stat-card p{
-  color:#cbd5e1;
-  margin-top:10px;
+margin-top:10px;
+color:#cbd5e1;
 }
 
 .cards{
-  padding:30px 20px;
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-  gap:25px;
-  max-width:1300px;
-  margin:auto;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:20px;
+margin-top:40px;
 }
 
 .card{
-  background:#1e293b;
-  border-radius:25px;
-  padding:25px;
-  transition:0.3s;
-  position:relative;
-  overflow:hidden;
+background:#1e293b;
+padding:25px;
+border-radius:20px;
+cursor:pointer;
+transition:0.3s;
 }
 
 .card:hover{
-  transform:translateY(-6px);
+transform:translateY(-5px);
 }
 
 .card h2{
-  color:#22c55e;
-  margin-bottom:8px;
+color:#22c55e;
+margin-bottom:10px;
 }
 
 .scientific{
-  color:#94a3b8;
-  margin-bottom:15px;
-  font-style:italic;
-}
-
-.badges{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin-bottom:15px;
-}
-
-.badge{
-  background:#334155;
-  padding:8px 14px;
-  border-radius:30px;
-  font-size:12px;
-}
-
-.section{
-  margin-top:18px;
-}
-
-.section h4{
-  margin-bottom:10px;
-  color:#f8fafc;
+color:#94a3b8;
+font-style:italic;
+margin-bottom:15px;
 }
 
 .tag{
-  display:inline-block;
-  background:#14532d;
-  color:#dcfce7;
-  padding:8px 12px;
-  border-radius:20px;
-  margin:5px 5px 0 0;
-  font-size:13px;
+display:inline-block;
+background:#334155;
+padding:6px 12px;
+border-radius:20px;
+margin:5px 5px 0 0;
+font-size:13px;
 }
 
-.premium-overlay{
-  margin-top:20px;
-  background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.1);
-  padding:18px;
-  border-radius:18px;
-}
-
-.premium-overlay h3{
-  color:#facc15;
-  margin-bottom:10px;
-}
-
-.unlock-btn{
-  margin-top:15px;
-  background:#22c55e;
-  color:white;
-  border:none;
-  padding:12px 18px;
-  border-radius:14px;
-  cursor:pointer;
-  font-size:14px;
+.premium{
+background:#facc15;
+color:black;
 }
 
 .loading{
-  text-align:center;
-  padding:40px;
-  color:#cbd5e1;
+text-align:center;
+margin-top:40px;
+color:#cbd5e1;
 }
 
 footer{
-  padding:40px 20px;
-  text-align:center;
-  color:#94a3b8;
+text-align:center;
+margin-top:80px;
+color:#94a3b8;
+}
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.9);
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+z-index:9999;
+}
+
+.modal-content{
+background:#1e293b;
+padding:30px;
+border-radius:20px;
+max-width:700px;
+width:100%;
+max-height:90vh;
+overflow-y:auto;
+position:relative;
+}
+
+.close-btn{
+position:absolute;
+right:20px;
+top:20px;
+background:red;
+border:none;
+color:white;
+padding:10px 14px;
+border-radius:10px;
+cursor:pointer;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -212,21 +192,17 @@ skincare, nutrition, chemistry, and botany.
 
 </header>
 
-<section class="hero">
-
 <div class="search-box">
 
 <input
 type="text"
 id="searchInput"
-placeholder="Search acne, malaria, ginger, ulcer..."
-/>
+placeholder="Search acne, malaria, ginger..."
+>
 
 </div>
 
-</section>
-
-<section class="stats">
+<div class="stats">
 
 <div class="stat-card">
 <h2>3</h2>
@@ -243,13 +219,13 @@ placeholder="Search acne, malaria, ginger, ulcer..."
 <p>Knowledge Levels</p>
 </div>
 
-</section>
-
-<div class="loading" id="loading">
-Loading herbal intelligence...
 </div>
 
-<section class="cards" id="cards"></section>
+<div class="loading" id="loading">
+Loading Nature Core AI...
+</div>
+
+<div class="cards" id="cards"></div>
 
 <footer>
 Nature Core AI © 2026 • Herbal Intelligence System
@@ -258,9 +234,9 @@ Nature Core AI © 2026 • Herbal Intelligence System
 <script>
 
 const API_URL =
-"http://localhost:4000/nature";
+"https://naturecore-ai.onrender.com/api/plants";
 
-const cardsContainer =
+const cards =
 document.getElementById("cards");
 
 const loading =
@@ -269,41 +245,57 @@ document.getElementById("loading");
 const searchInput =
 document.getElementById("searchInput");
 
-async function loadNature(search = "") {
+let plants = [];
 
-loading.style.display = "block";
+async function fetchPlants(){
 
-cardsContainer.innerHTML = "";
+try{
 
-try {
+const response =
+await fetch(API_URL);
 
-const response = await fetch(
-search
-? `${API_URL}?search=${search}`
-: API_URL
-);
+plants =
+await response.json();
 
-const data = await response.json();
+loading.style.display="none";
 
-loading.style.display = "none";
+loadPlants();
 
-if(data.length === 0){
+}catch(error){
 
-cardsContainer.innerHTML =
-"<p>No herbal intelligence found.</p>";
+loading.innerHTML =
+"Failed to load Nature Core AI.";
 
-return;
+console.log(error);
 
 }
 
-data.forEach(item => {
+}
+
+function loadPlants(search=""){
+
+cards.innerHTML="";
+
+const filtered =
+plants.filter(item=>
+
+item.name.toLowerCase().includes(search.toLowerCase()) ||
+
+item.conditions.join(" ").toLowerCase()
+.includes(search.toLowerCase())
+
+);
+
+filtered.forEach(item=>{
 
 const card =
 document.createElement("div");
 
-card.className = "card";
-card.onclick = () => openModal(item);
-card.innerHTML = `
+card.className="card";
+
+card.onclick=()=>openModal(item);
+
+card.innerHTML=`
 
 <h2>${item.name}</h2>
 
@@ -311,139 +303,40 @@ card.innerHTML = `
 ${item.scientificName}
 </p>
 
-<div class="badges">
-
-<span class="badge">
-${item.type}
-</span>
-
-<span class="badge">
-${item.category}
-</span>
-
-<span class="badge">
-${item.level.toUpperCase()}
-</span>
-
-</div>
-
-<div class="section">
-
-<h4>Benefits</h4>
-
-${item.benefits.map(b => `
-<span class="tag">${b}</span>
+${item.conditions.map(condition=>`
+<span class="tag">${condition}</span>
 `).join("")}
 
-</div>
+<br><br>
 
-<div class="section">
-
-<h4>Conditions</h4>
-
-${item.conditions.map(c => `
-<span class="tag">${c}</span>
-`).join("")}
-
-</div>
-
-<div class="section">
-
-<h4>Skincare Uses</h4>
-
-${item.skincareUses.map(s => `
-<span class="tag">${s}</span>
-`).join("")}
-
-</div>
-
-${item.premiumLocked ? `
-
-<div class="premium-overlay">
-
-<h3>
-🔒 Premium Herbal Intelligence
-</h3>
-
-<p>
-Advanced chemistry,
-dosage systems,
-AI medicinal analysis,
-and clinical-level knowledge
-require premium access.
-</p>
-
-<button class="unlock-btn">
-Unlock Premium
-</button>
-
-</div>
-
-` : ""}
+${item.premiumLocked
+?
+'<span class="tag premium">🔒 Premium</span>'
+:
+''
+}
 
 `;
 
-cardsContainer.appendChild(card);
+cards.appendChild(card);
 
 });
 
-} catch(error){
-
-loading.innerHTML =
-"Failed to load Nature Core AI.";
-
-console.error(error);
-
 }
 
-}
-
-searchInput.addEventListener(
-"input",
-(e)=>{
-loadNature(e.target.value);
-});
-
-loadNature();
 function openModal(item){
 
-const modal = document.createElement("div");
+const modal =
+document.createElement("div");
 
-modal.id = "modal";
+modal.className="modal";
 
-modal.style.position = "fixed";
-modal.style.top = "0";
-modal.style.left = "0";
-modal.style.width = "100%";
-modal.style.height = "100%";
-modal.style.background = "rgba(0,0,0,0.85)";
-modal.style.zIndex = "9999";
-modal.style.overflowY = "auto";
-modal.style.padding = "20px";
+modal.innerHTML=`
 
-modal.innerHTML = `
+<div class="modal-content">
 
-<div style="
-max-width:700px;
-margin:40px auto;
-background:#1e293b;
-padding:30px;
-border-radius:25px;
-position:relative;
-">
-
-<button onclick="closeModal()"
-style="
-position:absolute;
-right:20px;
-top:20px;
-background:red;
-color:white;
-border:none;
-padding:10px 14px;
-border-radius:10px;
-cursor:pointer;
-">
+<button class="close-btn"
+onclick="this.parentElement.parentElement.remove()">
 X
 </button>
 
@@ -451,16 +344,11 @@ X
 ${item.name}
 </h1>
 
-<p style="
-color:#94a3b8;
-margin-bottom:20px;
-font-style:italic;
-">
+<p class="scientific">
 ${item.scientificName}
 </p>
 
 <h3>Benefits</h3>
-
 <p>${item.benefits.join(", ")}</p>
 
 <h3 style="margin-top:20px;">
@@ -468,12 +356,6 @@ Conditions
 </h3>
 
 <p>${item.conditions.join(", ")}</p>
-
-<h3 style="margin-top:20px;">
-Skincare Uses
-</h3>
-
-<p>${item.skincareUses.join(", ")}</p>
 
 <h3 style="margin-top:20px;">
 Preparation
@@ -487,17 +369,14 @@ Warnings
 
 <p>${item.warnings}</p>
 
-${
-item.premiumLocked
+${item.premiumLocked
 ?
 `
-
 <div style="
 margin-top:30px;
 background:#0f172a;
 padding:20px;
 border-radius:20px;
-border:1px solid #334155;
 ">
 
 <h2 style="color:#facc15;">
@@ -505,32 +384,16 @@ border:1px solid #334155;
 </h2>
 
 <p style="margin-top:10px;">
-Unlock:
-advanced chemistry,
-dosage systems,
-AI medicinal analysis,
-research intelligence,
-and clinical herbal explanations.
+Advanced medicinal analysis,
+dosage intelligence,
+AI chemistry,
+and research system.
 </p>
 
-<button style="
-margin-top:15px;
-background:#22c55e;
-color:white;
-border:none;
-padding:14px 20px;
-border-radius:14px;
-font-size:16px;
-cursor:pointer;
-">
-Upgrade to Premium
-</button>
-
 </div>
-
 `
 :
-""
+''
 }
 
 </div>
@@ -541,16 +404,12 @@ document.body.appendChild(modal);
 
 }
 
-function closeModal(){
+searchInput.addEventListener("input",(e)=>{
+loadPlants(e.target.value);
+});
 
-const modal =
-document.getElementById("modal");
+fetchPlants();
 
-if(modal){
-modal.remove();
-}
-
-}
 </script>
 
 </body>
