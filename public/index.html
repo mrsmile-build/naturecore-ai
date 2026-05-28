@@ -1,247 +1,510 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nature Core</title>
 
-  <title>Nature Core</title>
+<style>
 
-  <style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
 
-    *{
-      margin:0;
-      padding:0;
-      box-sizing:border-box;
-    }
+body{
+background:#07140c;
+color:white;
+padding:20px;
+}
 
-    body{
-      font-family:Arial, sans-serif;
-      background:#0f172a;
-      color:white;
-      padding:20px;
-    }
+header{
+text-align:center;
+margin-bottom:30px;
+}
 
-    header{
-      text-align:center;
-      margin-bottom:30px;
-    }
+header h1{
+font-size:38px;
+color:#4ade80;
+margin-bottom:10px;
+}
 
-    header h1{
-      color:#22c55e;
-      font-size:40px;
-      margin-bottom:10px;
-    }
+header p{
+color:#d1d5db;
+}
 
-    header p{
-      color:#cbd5e1;
-      font-size:18px;
-    }
+.search-box{
+margin:25px auto;
+max-width:700px;
+}
 
-    .search-box{
-      display:flex;
-      justify-content:center;
-      margin-bottom:30px;
-    }
+.search-box input{
+width:100%;
+padding:16px;
+border:none;
+border-radius:14px;
+background:#102417;
+color:white;
+font-size:16px;
+outline:none;
+}
 
-    .search-box input{
-      width:100%;
-      max-width:500px;
-      padding:15px;
-      border:none;
-      border-radius:12px;
-      font-size:16px;
-      outline:none;
-    }
+.stats{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:15px;
+margin-bottom:30px;
+}
 
-    .cards{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      gap:20px;
-    }
+.stat-card{
+background:#102417;
+padding:20px;
+border-radius:18px;
+text-align:center;
+border:1px solid #1f3d2a;
+}
 
-    .card{
-      background:#1e293b;
-      border-radius:20px;
-      padding:20px;
-      transition:0.3s;
-      box-shadow:0 0 10px rgba(0,0,0,0.3);
-    }
+.stat-card h2{
+color:#4ade80;
+margin-bottom:8px;
+}
 
-    .card:hover{
-      transform:translateY(-5px);
-    }
+.section-title{
+margin:30px 0 15px;
+font-size:24px;
+color:#4ade80;
+}
 
-    .card h2{
-      color:#22c55e;
-      margin-bottom:10px;
-    }
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+gap:20px;
+}
 
-    .scientific{
-      color:#94a3b8;
-      font-style:italic;
-      margin-bottom:15px;
-    }
+.card{
+background:#102417;
+border-radius:20px;
+padding:20px;
+border:1px solid #1f3d2a;
+cursor:pointer;
+transition:0.3s;
+}
 
-    .tags{
-      margin-bottom:15px;
-    }
+.card:hover{
+transform:translateY(-5px);
+}
 
-    .tag{
-      display:inline-block;
-      background:#334155;
-      padding:6px 12px;
-      border-radius:20px;
-      margin:5px 5px 0 0;
-      font-size:13px;
-    }
+.card h2{
+color:#4ade80;
+margin-bottom:5px;
+}
 
-    .benefits{
-      margin-top:15px;
-    }
+.scientific{
+color:#cbd5e1;
+font-style:italic;
+margin-bottom:12px;
+}
 
-    .benefits h4{
-      margin-bottom:10px;
-      color:#f8fafc;
-    }
+.badges{
+display:flex;
+flex-wrap:wrap;
+gap:8px;
+margin-bottom:15px;
+}
 
-    .benefit{
-      background:#14532d;
-      color:#dcfce7;
-      padding:6px 10px;
-      border-radius:15px;
-      margin:5px 5px 0 0;
-      display:inline-block;
-      font-size:13px;
-    }
+.badge{
+padding:6px 12px;
+border-radius:30px;
+font-size:12px;
+background:#14532d;
+}
 
-    .loading{
-      text-align:center;
-      margin-top:50px;
-      font-size:20px;
-      color:#cbd5e1;
-    }
+.premium{
+background:#78350f;
+color:#facc15;
+}
 
-  </style>
+.free{
+background:#14532d;
+color:#86efac;
+}
+
+.info{
+margin-top:14px;
+}
+
+.info h4{
+margin-bottom:8px;
+color:#4ade80;
+}
+
+.tag{
+display:inline-block;
+padding:6px 10px;
+margin:4px;
+border-radius:20px;
+background:#1f2937;
+font-size:13px;
+}
+
+.locked{
+margin-top:18px;
+padding:12px;
+border-radius:12px;
+background:#2b1700;
+color:#facc15;
+font-size:14px;
+}
+
+.loading{
+text-align:center;
+margin-top:50px;
+font-size:18px;
+color:#4ade80;
+}
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.8);
+display:none;
+justify-content:center;
+align-items:center;
+padding:20px;
+z-index:999;
+}
+
+.modal-content{
+background:#102417;
+width:100%;
+max-width:700px;
+max-height:90vh;
+overflow-y:auto;
+padding:25px;
+border-radius:20px;
+position:relative;
+border:1px solid #1f3d2a;
+}
+
+.close-btn{
+position:absolute;
+top:15px;
+right:15px;
+background:red;
+color:white;
+border:none;
+padding:8px 12px;
+border-radius:10px;
+cursor:pointer;
+}
+
+.modal h2{
+color:#4ade80;
+margin-bottom:5px;
+}
+
+.modal-section{
+margin-top:20px;
+}
+
+.modal-section h3{
+margin-bottom:10px;
+color:#4ade80;
+}
+
+</style>
 </head>
 
 <body>
 
-  <header>
-    <h1>Nature Core</h1>
+<header>
+<h1>Nature Core</h1>
 
-    <p>
-      Discover the power of nature:
-      herbs, roots, leaves, foods, and medicinal plants.
-    </p>
-  </header>
+<p>
+AI-powered herbal intelligence platform for medicine,
+skincare, nutrition, chemistry, and botany.
+</p>
+</header>
 
-  <div class="search-box">
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="Search for neem, ginger, immune..."
-    />
-  </div>
+<div class="search-box">
+<input
+type="text"
+id="searchInput"
+placeholder="Search acne, malaria, ginger, ulcer..."
+>
+</div>
 
-  <div class="loading" id="loading">
-    Loading Nature Data...
-  </div>
+<div class="stats">
 
-  <div class="cards" id="cards"></div>
+<div class="stat-card">
+<h2 id="plantCount">0</h2>
+<p>Medicinal Plants</p>
+</div>
 
-  <script>
+<div class="stat-card">
+<h2 id="conditionCount">0</h2>
+<p>Conditions</p>
+</div>
 
-    const API_URL =
-      "https://nature-core.onrender.com/nature";
+<div class="stat-card">
+<h2>Free + Premium</h2>
+<p>Knowledge Levels</p>
+</div>
 
-    const cardsContainer =
-      document.getElementById("cards");
+</div>
 
-    const loading =
-      document.getElementById("loading");
+<h2 class="section-title">
+Herbal Intelligence Library
+</h2>
 
-    const searchInput =
-      document.getElementById("searchInput");
+<div id="loading" class="loading">
+Loading Nature Core Intelligence...
+</div>
 
-    async function loadNature(search = "") {
+<div class="cards" id="cards"></div>
 
-      loading.style.display = "block";
+<div class="modal" id="modal">
 
-      cardsContainer.innerHTML = "";
+<div class="modal-content" id="modalContent">
 
-      try {
+<button class="close-btn" onclick="closeModal()">
+X
+</button>
 
-        const response = await fetch(
-          search
-            ? `${API_URL}?search=${search}`
-            : API_URL
-        );
+<div id="modalBody"></div>
 
-        const data = await response.json();
+</div>
 
-        loading.style.display = "none";
+</div>
 
-        if(data.length === 0){
+<script>
 
-          cardsContainer.innerHTML = `
-            <p>No results found.</p>
-          `;
+const API_URL = "https://nature-core.onrender.com";
 
-          return;
-        }
+const cards = document.getElementById("cards");
+const loading = document.getElementById("loading");
+const searchInput = document.getElementById("searchInput");
 
-        data.forEach(item => {
+async function loadNature(search=""){
 
-          const card = document.createElement("div");
+loading.style.display = "block";
+cards.innerHTML = "";
 
-          card.className = "card";
+try{
 
-          card.innerHTML = `
+const response = await fetch(
+`${API_URL}/nature?search=${search}`
+);
 
-            <h2>${item.name}</h2>
+const data = await response.json();
 
-            <p class="scientific">
-              ${item.scientificName}
-            </p>
+loading.style.display = "none";
 
-            <div class="tags">
-              <span class="tag">${item.type}</span>
-              <span class="tag">${item.category}</span>
-            </div>
+document.getElementById("plantCount").innerText =
+data.length;
 
-            <div class="benefits">
+let conditionSet = new Set();
 
-              <h4>Benefits</h4>
+data.forEach(item=>{
+item.conditions.forEach(c=>conditionSet.add(c));
+});
 
-              ${item.benefits.map(benefit => `
-                <span class="benefit">
-                  ${benefit}
-                </span>
-              `).join("")}
+document.getElementById("conditionCount").innerText =
+conditionSet.size;
 
-            </div>
-          `;
+data.forEach(item=>{
 
-          cardsContainer.appendChild(card);
+const card = document.createElement("div");
 
-        });
+card.className = "card";
 
-      } catch(error){
+card.onclick = ()=>openModal(item);
 
-        loading.innerHTML =
-          "Failed to load Nature Core API.";
+card.innerHTML = `
 
-        console.error(error);
-      }
-    }
+<h2>${item.name}</h2>
 
-    searchInput.addEventListener("input", (e) => {
-      loadNature(e.target.value);
-    });
+<div class="scientific">
+${item.scientificName}
+</div>
 
-    loadNature();
+<div class="badges">
 
-  </script>
+<span class="badge">${item.type}</span>
+
+<span class="badge">${item.category}</span>
+
+<span class="badge ${item.level}">
+${item.level.toUpperCase()}
+</span>
+
+</div>
+
+<div class="info">
+<h4>Conditions</h4>
+
+${item.conditions.map(c=>`
+<span class="tag">${c}</span>
+`).join("")}
+
+</div>
+
+`;
+
+cards.appendChild(card);
+
+});
+
+}catch(error){
+
+loading.innerHTML =
+"Failed to connect to Nature Core API.";
+
+console.error(error);
+
+}
+
+}
+
+function openModal(item){
+
+document.getElementById("modal").style.display =
+"flex";
+
+document.getElementById("modalBody").innerHTML = `
+
+<h2>${item.name}</h2>
+
+<div class="scientific">
+${item.scientificName}
+</div>
+
+<div class="badges">
+
+<span class="badge">${item.type}</span>
+
+<span class="badge">${item.category}</span>
+
+<span class="badge ${item.level}">
+${item.level.toUpperCase()}
+</span>
+
+</div>
+
+<div class="modal-section">
+<h3>Benefits</h3>
+
+${item.benefits.map(b=>`
+<span class="tag">${b}</span>
+`).join("")}
+
+</div>
+
+<div class="modal-section">
+<h3>Conditions</h3>
+
+${item.conditions.map(c=>`
+<span class="tag">${c}</span>
+`).join("")}
+
+</div>
+
+<div class="modal-section">
+<h3>Skincare Uses</h3>
+
+${item.skincareUses.map(s=>`
+<span class="tag">${s}</span>
+`).join("")}
+
+</div>
+
+<div class="modal-section">
+<h3>Preparation</h3>
+
+${item.preparation.map(p=>`
+<span class="tag">${p}</span>
+`).join("")}
+
+</div>
+
+<div class="modal-section">
+<h3>Warnings</h3>
+
+${item.warnings.map(w=>`
+<span class="tag">${w}</span>
+`).join("")}
+
+</div>
+
+<div class="modal-section">
+<h3>Similar Plants</h3>
+
+${item.similarPlants.map(sp=>`
+<span class="tag">${sp}</span>
+`).join("")}
+
+</div>
+
+<div class="modal-section">
+<h3>Chemistry</h3>
+
+<p>
+Medicinal Class:
+${item.chemistry.medicinalClass}
+</p>
+
+${item.chemistry.activeCompounds.map(ac=>`
+<span class="tag">${ac}</span>
+`).join("")}
+
+</div>
+
+<div class="modal-section">
+<h3>Botany</h3>
+
+<p>Family: ${item.botany.family}</p>
+<p>Kingdom: ${item.botany.kingdom}</p>
+
+</div>
+
+${
+item.level === "premium"
+?
+`
+<div class="locked">
+🔒 Premium research intelligence required
+for advanced medicinal explanations,
+AI herbal analysis, dosage systems,
+and clinical-level knowledge.
+</div>
+`
+:
+""
+}
+
+`;
+
+}
+
+function closeModal(){
+
+document.getElementById("modal").style.display =
+"none";
+
+}
+
+searchInput.addEventListener("input",(e)=>{
+loadNature(e.target.value);
+});
+
+loadNature();
+
+</script>
 
 </body>
 </html>
