@@ -4,74 +4,177 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-/*
-🧠 NATURE CORE AI BACKEND CORE
-- serves frontend
-- provides intelligence API
-- prepares for AI ranking system
-*/
-
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
-
-/* =========================
-   🌿 HERBAL INTELLIGENCE DATA LAYER
-   ========================= */
-
 const natureData = require("./data/natureData");
 
+app.use(express.json());
+
 /* =========================
-   🔍 BASIC INTELLIGENCE API
+   🌿 PREMIUM ACCESS SYSTEM
+   ========================= */
+
+function sanitizePlant(item, premium = false) {
+
+  if (premium) return item;
+
+  return {
+    id: item.id,
+    name: item.name,
+    scientificName: item.scientificName,
+    type: item.type,
+    category: item.category,
+    origin: item.origin,
+    benefits: item.benefits,
+    conditions: item.conditions,
+    skincareUses: item.skincareUses,
+    level: item.level,
+
+    premiumLocked:
+      item.level === "premium",
+
+    lockedFeatures:
+      item.level === "premium"
+        ? [
+            "Advanced chemistry",
+            "Dosage intelligence",
+            "Clinical herbal analysis"
+          ]
+        : []
+  };
+}
+
+/* =========================
+   🧠 INTELLIGENCE SCORING
+   ========================= */
+
+function calculateScore(item, query) {
+
+  let score = 0;
+
+  const q = query.toLowerCase();
+
+  if (item.name.toLowerCase().includes(q))
+    score += 50;
+
+  if (
+    item.conditions?.some(c =>
+      c.toLowerCase().includes(q)
+    )
+  ) score += 40;
+
+  if (
+    item.benefits?.some(b =>
+      b.toLowerCase().includes(q)
+    )
+  ) score += 30;
+
+  return score;
+}
+
+/* =========================
+   🌿 SMART SEARCH ENGINE
    ========================= */
 
 app.get("/nature", (req, res) => {
-  const search = (req.query.search || "").toLowerCase();
 
-  if (!search) return res.json(natureData);
+  const search =
+    req.query.search || "";
 
-  const filtered = natureData.filter(item =>
-    item.name.toLowerCase().includes(search) ||
-    (item.conditions && item.conditions.join(" ").toLowerCase().includes(search)) ||
-    (item.benefits && item.benefits.join(" ").toLowerCase().includes(search))
-  );
+  const premium =
+    req.query.premium === "true";
 
-  res.json(filtered);
+  let results = natureData.map(item => {
+
+    const cleanItem =
+      sanitizePlant(item, premium);
+
+    return {
+      ...cleanItem,
+      score: search
+        ? calculateScore(item, search)
+        : 1
+    };
+  });
+
+  if (search) {
+
+    results = results
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+  }
+
+  res.json(results);
 });
 
 /* =========================
-   🧠 CONDITION INTELLIGENCE ENGINE (PHASE 2 READY)
+   🔍 CONDITION ENGINE
    ========================= */
 
 app.get("/conditions/:name", (req, res) => {
-  const condition = req.params.name.toLowerCase();
 
-  const results = natureData.filter(item =>
-    item.conditions &&
-    item.conditions.map(c => c.toLowerCase()).includes(condition)
-  );
+  const premium =
+    req.query.premium === "true";
+
+  const condition =
+    req.params.name.toLowerCase();
+
+  const results = natureData
+    .filter(item =>
+      item.conditions?.some(c =>
+        c.toLowerCase() === condition
+      )
+    )
+    .map(item =>
+      sanitizePlant(item, premium)
+    );
 
   res.json({
     condition,
+    totalResults: results.length,
     results
   });
 });
 
 /* =========================
-   🔬 PLANT DETAIL ENGINE
+   🌱 SINGLE PLANT ENGINE
    ========================= */
 
 app.get("/plant/:name", (req, res) => {
-  const name = req.params.name.toLowerCase();
 
-  const plant = natureData.find(p =>
-    p.name.toLowerCase() === name
-  );
+  const premium =
+    req.query.premium === "true";
+
+  const name =
+    req.params.name.toLowerCase();
+
+  const plant =
+    natureData.find(p =>
+      p.name.toLowerCase() === name
+    );
 
   if (!plant) {
-    return res.status(404).json({ error: "Plant not found" });
+    return res
+      .status(404)
+      .json({
+        error: "Plant not found"
+      });
   }
 
-  res.json(plant);
+  res.json(
+    sanitizePlant(plant, premium)
+  );
+});
+
+/* =========================
+   🚀 FRONTEND
+   ========================= */
+
+app.use(express.static(__dirname));
+
+app.get("/", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "index.html")
+  );
 });
 
 /* =========================
@@ -79,5 +182,9 @@ app.get("/plant/:name", (req, res) => {
    ========================= */
 
 app.listen(PORT, () => {
-  console.log(`🌿 Nature Core AI running on port ${PORT}`);
+
+  console.log(
+    `🌿 Nature Core AI running on port ${PORT}`
+  );
+
 });
