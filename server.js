@@ -1,4 +1,15 @@
 require('dotenv').config();
+const localTerms = require('./localTerms');
+
+function translateQuery(question) {
+  let translated = question.toLowerCase();
+  for (const [local, english] of Object.entries(localTerms)) {
+    if (translated.includes(local)) {
+      translated = translated.replace(local, english);
+    }
+  }
+  return translated;
+}
 const express = require("express");
 const cors = require("cors");
 const supabase = require("./supabaseClient");
@@ -128,11 +139,11 @@ app.post("/ask", async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "You are Nature Core AI, a helpful herbal medicine assistant specializing in African and global medicinal plants. Your job is to help users find relevant plants and natural remedies for any health condition they ask about. Always answer helpfully. Mention specific plants from the database when relevant. For serious conditions, also advise seeing a doctor. Never refuse a health question - always try to help with plant-based information."
+          content: "You are Nature Core AI, an expert natural medicine system combining the knowledge of a medical doctor, pharmacist, biochemist, botanist, and traditional African herbalist. You understand biology, chemistry, physiology, pharmacology, and traditional medicine. When answering: 1) Identify the condition clearly including any local/Nigerian names 2) Explain WHY and HOW the recommended plants work at a biochemical level 3) List specific plants, foods, roots, barks, seeds, and natural ingredients from the database 4) Include preparation methods and dosages 5) Explain the active compounds and their effects 6) Note any drug interactions or contraindications 7) Reference that scientific studies support this where applicable. Never refuse a health question. Always provide expert-level, evidence-based natural medicine guidance."
         },
         {
           role: "user",
-          content: `Plant database: ${JSON.stringify(plants)}\n\nQuestion: ${question}`
+          content: `Plant database: ${JSON.stringify(plants)}\n\nQuestion: ${translateQuery(question)}\n\nOriginal question: ${question}`
         }
       ]
     })
