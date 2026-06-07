@@ -205,12 +205,12 @@ placeholder="Search acne, malaria, ginger..."
 <div class="stats">
 
 <div class="stat-card">
-<h2>3</h2>
+<h2 id="plantCount">3</h2>
 <p>Medicinal Plants</p>
 </div>
 
 <div class="stat-card">
-<h2>11</h2>
+<h2 id="conditionCount">11</h2>
 <p>Conditions</p>
 </div>
 
@@ -260,6 +260,11 @@ await response.json();
 loading.style.display="none";
 
 loadPlants();
+
+document.getElementById("plantCount").textContent = plants.length;
+
+const allConditions = [...new Set(plants.flatMap(p => p.conditions || []))];
+document.getElementById("conditionCount").textContent = allConditions.length;
 
 }catch(error){
 
