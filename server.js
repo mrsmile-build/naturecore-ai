@@ -121,7 +121,7 @@ app.get("/nature", async (req, res) => {
 });
 
 app.post("/ask", async (req, res) => {
-  const { question } = req.body;
+  const { question, history = [] } = req.body;
 
   const { data: plants } = await supabase
     .from("plants")

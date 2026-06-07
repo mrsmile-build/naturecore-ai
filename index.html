@@ -177,6 +177,10 @@ cursor:pointer;
 }
 
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -208,14 +212,25 @@ placeholder="Search acne, malaria, ginger..."
 </div>
 
 
-<div style="max-width:700px;margin:30px auto 20px;padding:24px;background:#1e293b;border-radius:20px;border:1px solid #22c55e33;">
-<h2 style="color:#22c55e;margin-bottom:6px;font-size:20px;">🌿 Ask Nature Core AI</h2>
-<p style="color:#94a3b8;margin-bottom:16px;font-size:13px;">Ask anything — plants, conditions, remedies</p>
-<div style="display:flex;gap:10px;">
-<input id="aiInput" placeholder="What plant helps malaria?" style="flex:1;padding:12px;background:#0f172a;color:white;border:1px solid #334155;border-radius:12px;font-size:14px;outline:none;">
-<button onclick="askAI()" id="askBtn" style="padding:12px 18px;background:#22c55e;color:#000;border:none;border-radius:12px;font-weight:bold;cursor:pointer;">Ask AI</button>
+<div style="max-width:700px;margin:30px auto 20px;background:#1e293b;border-radius:20px;border:1px solid #22c55e33;overflow:hidden;">
+<div style="padding:16px 20px;border-bottom:1px solid #22c55e22;display:flex;justify-content:space-between;align-items:center;">
+  <div>
+    <h2 style="color:#22c55e;font-size:18px;margin:0;">🌿 Ask Nature Core AI</h2>
+    <p style="color:#64748b;font-size:12px;margin:4px 0 0;">Ask anything in any language</p>
+  </div>
+  <button onclick="clearChat()" style="background:none;border:1px solid #334155;color:#64748b;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;">Clear</button>
 </div>
-<div id="aiResponse" style="margin-top:16px;color:#cbd5e1;line-height:1.8;font-size:14px;max-height:500px;overflow-y:auto;padding-right:8px;"></div>
+<div id="chatMessages" style="padding:16px;min-height:60px;max-height:450px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;"></div>
+<div id="typingIndicator" style="display:none;padding:0 16px 12px;color:#22c55e;font-size:13px;">
+  <span style="animation:pulse 1s infinite;">🌿 Nature Core AI is thinking</span><span id="dots">...</span>
+</div>
+<div style="padding:16px;border-top:1px solid #22c55e22;display:flex;gap:10px;align-items:flex-end;">
+  <textarea id="aiInput" placeholder="Ask anything — Yoruba, Hausa, English, any language..." 
+    style="flex:1;padding:12px;background:#0f172a;color:white;border:1px solid #334155;border-radius:12px;font-size:14px;outline:none;resize:none;min-height:44px;max-height:120px;line-height:1.5;font-family:inherit;"
+    rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+  <button onclick="askAI()" id="askBtn" 
+    style="padding:12px 18px;background:#22c55e;color:#000;border:none;border-radius:12px;font-weight:bold;cursor:pointer;white-space:nowrap;min-width:80px;">Send</button>
+</div>
 </div>
 <div class="stats">
 
@@ -438,15 +453,64 @@ fetch("https://naturecore-ai.onrender.com/")
 // Give Render 3 seconds to wake up, then load
 setTimeout(fetchPlants, 3000);
 
+let chatHistory = [];
+
+function clearChat(){
+  chatHistory = [];
+  document.getElementById("chatMessages").innerHTML = "";
+}
+
+function addMessage(role, text){
+  const msgs = document.getElementById("chatMessages");
+  const isUser = role === "user";
+  const div = document.createElement("div");
+  div.style.cssText = isUser
+    ? "align-self:flex-end;background:#22c55e22;border:1px solid #22c55e44;color:#e2e8f0;padding:12px 16px;border-radius:16px 16px 4px 16px;max-width:85%;font-size:14px;line-height:1.6;"
+    : "align-self:flex-start;background:#0f172a;border:1px solid #1e293b;color:#cbd5e1;padding:12px 16px;border-radius:4px 16px 16px 16px;max-width:95%;font-size:14px;line-height:1.8;position:relative;";
+  
+  if(isUser){
+    div.textContent = text;
+  } else {
+    div.innerHTML = text
+      .replace(/\*\*(.*?)\*\*/g,"<strong style='color:#22c55e'>$1</strong>")
+      .replace(/\n/g,"<br>");
+    
+    // Add complete badge
+    const badge = document.createElement("div");
+    badge.style.cssText = "text-align:right;margin-top:8px;font-size:11px;color:#22c55e;opacity:0.7;";
+    badge.textContent = "✓ Complete";
+    div.appendChild(badge);
+  }
+  
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
 async function askAI(){
   const input = document.getElementById("aiInput");
-  const responseDiv = document.getElementById("aiResponse");
   const btn = document.getElementById("askBtn");
+  const typing = document.getElementById("typingIndicator");
   const question = input.value.trim();
   if(!question) return;
+
+  addMessage("user", question);
+  chatHistory.push({role:"user", content: question});
+  input.value = "";
+  input.style.height = "44px";
+
   btn.textContent = "⏳";
   btn.disabled = true;
-  responseDiv.innerHTML = "<span style='color:#22c55e'>🌿 Thinking...</span>";
+  typing.style.display = "block";
+
+  // Animate dots
+  let dotCount = 0;
+  const dotInterval = setInterval(()=>{
+    dotCount = (dotCount+1) % 4;
+    const d = document.getElementById("dots");
+    if(d) d.textContent = ".".repeat(dotCount+1);
+  }, 400);
+
   let attempts = 0;
   async function tryAsk(){
     attempts++;
@@ -454,20 +518,31 @@ async function askAI(){
       const res = await fetch("https://naturecore-ai.onrender.com/ask",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({question})
+        body:JSON.stringify({
+          question,
+          history: chatHistory.slice(-6)
+        })
       });
       if(!res.ok) throw new Error("Server error");
       const data = await res.json();
-      responseDiv.innerHTML = "🌿 " + data.answer.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br>");
-      btn.textContent = "Ask AI";
+      
+      clearInterval(dotInterval);
+      typing.style.display = "none";
+      addMessage("assistant", data.answer);
+      chatHistory.push({role:"assistant", content: data.answer});
+      
+      btn.textContent = "Send";
       btn.disabled = false;
     }catch(e){
       if(attempts < 3){
-        responseDiv.innerHTML = "<span style='color:#facc15'>⏳ Retrying... attempt "+attempts+"/3</span>";
+        const d = document.getElementById("dots");
+        if(d) d.textContent = " (retrying "+attempts+"/3)";
         setTimeout(tryAsk, 4000);
       }else{
-        responseDiv.innerHTML = "<span style='color:#ef4444'>❌ Could not reach AI. Check connection and try again.</span>";
-        btn.textContent = "Ask AI";
+        clearInterval(dotInterval);
+        typing.style.display = "none";
+        addMessage("assistant", "❌ Could not reach AI. Check connection and try again.");
+        btn.textContent = "Send";
         btn.disabled = false;
       }
     }
@@ -475,8 +550,16 @@ async function askAI(){
   tryAsk();
 }
 
-document.getElementById("aiInput").addEventListener("keypress", function(e){
-  if(e.key === "Enter") askAI();
+document.addEventListener("DOMContentLoaded", function(){
+  const input = document.getElementById("aiInput");
+  if(input){
+    input.addEventListener("keypress", function(e){
+      if(e.key === "Enter" && !e.shiftKey){
+        e.preventDefault();
+        askAI();
+      }
+    });
+  }
 });
 
 
