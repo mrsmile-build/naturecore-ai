@@ -269,7 +269,10 @@ loading.innerHTML = retryCount > 0
   ? "⏳ Waking up server... attempt "+retryCount+"/"+maxRetries
   : "🌿 Loading Nature Core AI...";
 
-const response = await fetch(API_URL);
+const controller = new AbortController();
+const timer = setTimeout(()=>controller.abort(), 20000);
+const response = await fetch(API_URL, {signal:controller.signal});
+clearTimeout(timer);
 plants = await response.json();
 loading.style.display="none";
 loadPlants();
