@@ -415,7 +415,47 @@ loadPlants(e.target.value);
 
 fetchPlants();
 
+async function askAI(){
+  const input = document.getElementById("aiInput");
+  const responseDiv = document.getElementById("aiResponse");
+  const btn = document.getElementById("askBtn");
+  const question = input.value.trim();
+  if(!question) return;
+  btn.textContent = "...";
+  btn.disabled = true;
+  responseDiv.innerHTML = "<span style='color:#22c55e'>🌿 Thinking...</span>";
+  try{
+    const res = await fetch("https://naturecore-ai.onrender.com/ask",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({question})
+    });
+    const data = await res.json();
+    responseDiv.innerHTML = data.answer.replace(/
+/g,"<br>");
+  }catch(e){
+    responseDiv.innerHTML = "<span style='color:#ef4444'>Failed to connect to AI. Try again.</span>";
+  }
+  btn.textContent = "Ask AI";
+  btn.disabled = false;
+}
+
+document.getElementById("aiInput").addEventListener("keypress", function(e){
+  if(e.key === "Enter") askAI();
+});
+
+
 </script>
 
+
+<div style="max-width:700px;margin:40px auto 20px;padding:24px;background:#1e293b;border-radius:20px;">
+<h2 style="color:#22c55e;margin-bottom:6px;font-size:22px;">🌿 Ask Nature Core AI</h2>
+<p style="color:#94a3b8;margin-bottom:16px;font-size:14px;">Ask anything about medicinal plants, conditions, or remedies</p>
+<div style="display:flex;gap:10px;">
+<input id="aiInput" placeholder="What plant helps malaria?" style="flex:1;padding:14px;background:#0f172a;color:white;border:1px solid #22c55e;border-radius:12px;font-size:15px;outline:none;">
+<button onclick="askAI()" id="askBtn" style="padding:14px 20px;background:#22c55e;color:#000;border:none;border-radius:12px;font-weight:bold;cursor:pointer;white-space:nowrap;">Ask AI</button>
+</div>
+<div id="aiResponse" style="margin-top:20px;color:#cbd5e1;line-height:1.9;min-height:20px;font-size:15px;"></div>
+</div>
 </body>
 </html>

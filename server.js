@@ -7,7 +7,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const GROQ_KEY = process.env.GROQ_KEY;
+const GROQ_KEYS = [process.env.GROQ_KEY_1, process.env.GROQ_KEY_2, process.env.GROQ_KEY_3].filter(Boolean);
+let keyIndex = 0;
+function getGroqKey(){ const k = GROQ_KEYS[keyIndex % GROQ_KEYS.length]; keyIndex++; return k; }
 
 async function searchPubMed(plantName) {
   try {
@@ -46,7 +48,7 @@ async function structureWithGroq(plantName, pubmedData, wikiData) {
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${GROQ_KEY}`,
+      'Authorization': `Bearer ${getGroqKey()}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
@@ -117,7 +119,7 @@ app.post("/ask", async (req, res) => {
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${GROQ_KEY}`,
+      "Authorization": `Bearer ${getGroqKey()}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
