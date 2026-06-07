@@ -300,7 +300,7 @@ function loadPlants(search=""){
 cards.innerHTML="";
 
 const filtered =
-plants.filter(item=>
+plants.filter(item=> (item.conditions && item.conditions.some(c => c.toLowerCase().includes(search.toLowerCase()))) || (item.benefits && item.benefits.some(b => b.toLowerCase().includes(search.toLowerCase()))) || 
 
 item.name.toLowerCase().includes(search.toLowerCase()) ||
 
@@ -458,7 +458,7 @@ async function askAI(){
       });
       if(!res.ok) throw new Error("Server error");
       const data = await res.json();
-      responseDiv.innerHTML = "🌿 " + data.answer.replace(/\n/g,"<br>");
+      responseDiv.innerHTML = "🌿 " + data.answer.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br>");
       btn.textContent = "Ask AI";
       btn.disabled = false;
     }catch(e){
