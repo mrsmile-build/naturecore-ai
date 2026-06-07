@@ -135,7 +135,7 @@ app.post("/ask", async (req, res) => {
     },
     body: JSON.stringify({
       model: "llama-3.1-8b-instant",
-      max_tokens: 500,
+      max_tokens: 1500,
       messages: [
         {
           role: "system",
@@ -154,6 +154,20 @@ YORUBA EXAMPLES (for reference):
 - jedijedi = hemorrhoids/piles
 - abosi = appendicitis
 - oje = dysentery
+- ogbe inu = ulcer (ogbe=wound/sore, inu=inside/stomach = stomach ulcer)
+- inu riro = nausea/stomach upset
+- ara gbigbe = dehydration
+- eje = blood
+- eje riru = high blood pressure
+- okan = heart
+- ẹdọ = liver
+- iwe = kidney
+- afomo = diabetes
+- ara ooru = fever/body heat
+- egungun = bone/joint pain
+- ese = leg/foot pain
+- ọgbẹ = wound/sore
+- ara aisan = general illness
 
 ANSWER FORMAT for every question:
 1. Condition: [name in English + original language + other names worldwide]
