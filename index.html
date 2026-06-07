@@ -202,6 +202,16 @@ placeholder="Search acne, malaria, ginger..."
 
 </div>
 
+
+<div style="max-width:700px;margin:30px auto 20px;padding:24px;background:#1e293b;border-radius:20px;border:1px solid #22c55e33;">
+<h2 style="color:#22c55e;margin-bottom:6px;font-size:20px;">🌿 Ask Nature Core AI</h2>
+<p style="color:#94a3b8;margin-bottom:16px;font-size:13px;">Ask anything — plants, conditions, remedies</p>
+<div style="display:flex;gap:10px;">
+<input id="aiInput" placeholder="What plant helps malaria?" style="flex:1;padding:12px;background:#0f172a;color:white;border:1px solid #334155;border-radius:12px;font-size:14px;outline:none;">
+<button onclick="askAI()" id="askBtn" style="padding:12px 18px;background:#22c55e;color:#000;border:none;border-radius:12px;font-weight:bold;cursor:pointer;">Ask AI</button>
+</div>
+<div id="aiResponse" style="margin-top:16px;color:#cbd5e1;line-height:1.8;font-size:14px;"></div>
+</div>
 <div class="stats">
 
 <div class="stat-card">
@@ -447,15 +457,5 @@ document.getElementById("aiInput").addEventListener("keypress", function(e){
 
 </script>
 
-
-<div style="max-width:700px;margin:40px auto 20px;padding:24px;background:#1e293b;border-radius:20px;">
-<h2 style="color:#22c55e;margin-bottom:6px;font-size:22px;">🌿 Ask Nature Core AI</h2>
-<p style="color:#94a3b8;margin-bottom:16px;font-size:14px;">Ask anything about medicinal plants, conditions, or remedies</p>
-<div style="display:flex;gap:10px;">
-<input id="aiInput" placeholder="What plant helps malaria?" style="flex:1;padding:14px;background:#0f172a;color:white;border:1px solid #22c55e;border-radius:12px;font-size:15px;outline:none;">
-<button onclick="askAI()" id="askBtn" style="padding:14px 20px;background:#22c55e;color:#000;border:none;border-radius:12px;font-weight:bold;cursor:pointer;white-space:nowrap;">Ask AI</button>
-</div>
-<div id="aiResponse" style="margin-top:20px;color:#cbd5e1;line-height:1.9;min-height:20px;font-size:15px;"></div>
-</div>
 </body>
 </html>
