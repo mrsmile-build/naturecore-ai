@@ -431,7 +431,12 @@ searchInput.addEventListener("input",(e)=>{
 loadPlants(e.target.value);
 });
 
-fetchPlants();
+// Wake up Render before main fetch
+fetch("https://naturecore-ai.onrender.com/")
+  .catch(()=>{});
+
+// Give Render 3 seconds to wake up, then load
+setTimeout(fetchPlants, 3000);
 
 async function askAI(){
   const input = document.getElementById("aiInput");
