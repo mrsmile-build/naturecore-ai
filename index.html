@@ -458,8 +458,7 @@ async function askAI(){
       });
       if(!res.ok) throw new Error("Server error");
       const data = await res.json();
-      responseDiv.innerHTML = "🌿 " + data.answer.replace(/
-/g,"<br>");
+      responseDiv.innerHTML = "🌿 " + data.answer.replace(/\n/g,"<br>");
       btn.textContent = "Ask AI";
       btn.disabled = false;
     }catch(e){
