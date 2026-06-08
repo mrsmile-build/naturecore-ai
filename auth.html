@@ -209,7 +209,7 @@ async function signup(){
   }
 }
 
-async function googleLogin(){
+async function googleLogin(){ showAlert("Google login coming soon. Please use email signup for now.", "success"); return; //
   const { error } = await sb.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo: window.location.origin + "/naturecore-ai/app.html" }
