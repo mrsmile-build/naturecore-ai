@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Nature Core AI</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:Arial,sans-serif;
+background:#020617;
+color:white;
+padding:20px;
+}
+
+header{
+text-align:center;
+margin-top:30px;
+margin-bottom:40px;
+}
+
+header h1{
+font-size:50px;
+color:#22c55e;
+margin-bottom:10px;
+}
+
+header p{
+color:#cbd5e1;
+max-width:700px;
+margin:auto;
+line-height:1.6;
+}
+
+.search-box{
+max-width:700px;
+margin:30px auto;
+background:#1e293b;
+padding:14px;
+border-radius:20px;
+}
+
+.search-box input{
+width:100%;
+padding:18px;
+border:none;
+outline:none;
+border-radius:14px;
+background:#0f172a;
+color:white;
+font-size:16px;
+}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+margin:40px 0;
+}
+
+.stat-card{
+background:#1e293b;
+padding:30px;
+border-radius:20px;
+text-align:center;
+}
+
+.stat-card h2{
+font-size:40px;
+color:#22c55e;
+}
+
+.stat-card p{
+margin-top:10px;
+color:#cbd5e1;
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:20px;
+margin-top:40px;
+}
+
+.card{
+background:#1e293b;
+padding:25px;
+border-radius:20px;
+cursor:pointer;
+transition:0.3s;
+}
+
+.card:hover{
+transform:translateY(-5px);
+}
+
+.card h2{
+color:#22c55e;
+margin-bottom:10px;
+}
+
+.scientific{
+color:#94a3b8;
+font-style:italic;
+margin-bottom:15px;
+}
+
+.tag{
+display:inline-block;
+background:#334155;
+padding:6px 12px;
+border-radius:20px;
+margin:5px 5px 0 0;
+font-size:13px;
+}
+
+.premium{
+background:#facc15;
+color:black;
+}
+
+.loading{
+text-align:center;
+margin-top:40px;
+color:#cbd5e1;
+}
+
+footer{
+text-align:center;
+margin-top:80px;
+color:#94a3b8;
+}
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.9);
+display:flex;
+justify-content:center;
+align-items:center;
+padding:20px;
+z-index:9999;
+}
+
+.modal-content{
+background:#1e293b;
+padding:30px;
+border-radius:20px;
+max-width:700px;
+width:100%;
+max-height:90vh;
+overflow-y:auto;
+position:relative;
+}
+
+.close-btn{
+position:absolute;
+right:20px;
+top:20px;
+background:red;
+border:none;
+color:white;
+padding:10px 14px;
+border-radius:10px;
+cursor:pointer;
+}
+
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+</style>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+</head>
+
+<body>
+
+<header>
+
+<h1>Nature Core AI</h1>
+
+<p>
+AI-powered herbal intelligence platform for medicine,
+skincare, nutrition, chemistry, and botany.
+</p>
+
+</header>
+
+<div class="search-box">
+
+<input
+type="text"
+id="searchInput"
+placeholder="Search acne, malaria, ginger..."
+>
+
+</div>
+
+
+<div style="max-width:700px;margin:30px auto 20px;background:#1e293b;border-radius:20px;border:1px solid #22c55e33;overflow:hidden;">
+<div style="padding:16px 20px;border-bottom:1px solid #22c55e22;display:flex;justify-content:space-between;align-items:center;">
+  <div>
+    <h2 style="color:#22c55e;font-size:18px;margin:0;">🌿 Ask Nature Core AI</h2>
+    <p style="color:#64748b;font-size:12px;margin:4px 0 0;">Ask anything in any language</p>
+  </div>
+  <button onclick="clearChat()" style="background:none;border:1px solid #334155;color:#64748b;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;">Clear</button>
+</div>
+<div id="chatMessages" style="padding:16px;min-height:60px;max-height:450px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;"></div>
+<div id="typingIndicator" style="display:none;padding:0 16px 12px;color:#22c55e;font-size:13px;">
+  <span style="animation:pulse 1s infinite;">🌿 Nature Core AI is thinking</span><span id="dots">...</span>
+</div>
+<div style="padding:16px;border-top:1px solid #22c55e22;display:flex;gap:10px;align-items:flex-end;">
+  <textarea id="aiInput" placeholder="Ask anything — Yoruba, Hausa, English, any language..." 
+    style="flex:1;padding:12px;background:#0f172a;color:white;border:1px solid #334155;border-radius:12px;font-size:14px;outline:none;resize:none;min-height:44px;max-height:120px;line-height:1.5;font-family:inherit;"
+    rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+  <button onclick="askAI()" id="askBtn" 
+    style="padding:12px 18px;background:#22c55e;color:#000;border:none;border-radius:12px;font-weight:bold;cursor:pointer;white-space:nowrap;min-width:80px;">Send</button>
+</div>
+</div>
+<div class="stats">
+
+<div class="stat-card">
+<h2 id="plantCount">3</h2>
+<p>Medicinal Plants</p>
+</div>
+
+<div class="stat-card">
+<h2 id="conditionCount">11</h2>
+<p>Conditions</p>
+</div>
+
+<div class="stat-card">
+<h2>Free + Premium</h2>
+<p>Knowledge Levels</p>
+</div>
+
+</div>
+
+<div class="loading" id="loading">
+Loading Nature Core AI...
+</div>
+
+<div class="cards" id="cards"></div>
+
+<footer>
+Nature Core AI © 2026 • Herbal Intelligence System
+</footer>
+
+<script>
+
+const API_URL = "https://naturecore-ai.onrender.com/nature";
+"https://naturecore-ai.onrender.com/api/plants";
+
+const cards =
+document.getElementById("cards");
+
+const loading =
+document.getElementById("loading");
+
+const searchInput =
+document.getElementById("searchInput");
+
+let plants = [];
+
+async function fetchPlants(retryCount=0){
+const maxRetries=5;
+try{
+loading.innerHTML = retryCount > 0
+  ? "⏳ Waking up server... attempt "+retryCount+"/"+maxRetries
+  : "🌿 Loading Nature Core AI...";
+
+const controller = new AbortController();
+const timer = setTimeout(()=>controller.abort(), 20000);
+const response = await fetch(API_URL, {signal:controller.signal});
+clearTimeout(timer);
+plants = await response.json();
+loading.style.display="none";
+loadPlants();
+
+document.getElementById("plantCount").textContent = plants.length;
+const allConditions = [...new Set(plants.flatMap(p => p.conditions || []))];
+document.getElementById("conditionCount").textContent = allConditions.length;
+
+}catch(error){
+if(retryCount < maxRetries){
+  loading.innerHTML = "⏳ Server waking up... retrying in 5s (attempt "+(retryCount+1)+"/"+maxRetries+")";
+  setTimeout(()=>fetchPlants(retryCount+1), 5000);
+}else{
+  loading.innerHTML = `<div style="color:#ef4444;text-align:center;padding:20px;">
+    ❌ Could not connect.<br>
+    <button onclick="fetchPlants(0)" style="margin-top:12px;padding:10px 20px;background:#22c55e;color:#000;border:none;border-radius:10px;cursor:pointer;font-weight:bold;">🔄 Retry</button>
+  </div>`;
+}
+console.log(error);
+}
+}
+
+function loadPlants(search=""){
+
+cards.innerHTML="";
+
+const filtered =
+plants.filter(item=> (item.conditions && item.conditions.some(c => c.toLowerCase().includes(search.toLowerCase()))) || (item.benefits && item.benefits.some(b => b.toLowerCase().includes(search.toLowerCase()))) || 
+
+item.name.toLowerCase().includes(search.toLowerCase()) ||
+
+item.conditions.join(" ").toLowerCase()
+.includes(search.toLowerCase())
+
+);
+
+filtered.forEach(item=>{
+
+const card =
+document.createElement("div");
+
+card.className="card";
+
+card.onclick=()=>openModal(item);
+
+card.innerHTML=`
+
+<h2>${item.name}</h2>
+
+<p class="scientific">
+${item.scientific_name}
+</p>
+
+${item.conditions.map(condition=>`
+<span class="tag">${condition}</span>
+`).join("")}
+
+<br><br>
+
+${item.premiumLocked
+?
+'<span class="tag premium">🔒 Premium</span>'
+:
+''
+}
+
+`;
+
+cards.appendChild(card);
+
+});
+
+}
+
+function openModal(item){
+
+const modal =
+document.createElement("div");
+
+modal.className="modal";
+
+modal.innerHTML=`
+
+<div class="modal-content">
+
+<button class="close-btn"
+onclick="this.parentElement.parentElement.remove()">
+X
+</button>
+
+<h1 style="color:#22c55e;">
+${item.name}
+</h1>
+
+<p class="scientific">
+${item.scientific_name}
+</p>
+
+<h3>Benefits</h3>
+<p>${item.benefits.join(", ")}</p>
+
+<h3 style="margin-top:20px;">
+Conditions
+</h3>
+
+<p>${item.conditions.join(", ")}</p>
+
+<h3 style="margin-top:20px;">
+Preparation
+</h3>
+
+<p>${item.preparation}</p>
+
+<h3 style="margin-top:20px;">
+Warnings
+</h3>
+
+<p>${item.warnings}</p>
+
+${item.premiumLocked
+?
+`
+<div style="
+margin-top:30px;
+background:#0f172a;
+padding:20px;
+border-radius:20px;
+">
+
+<h2 style="color:#facc15;">
+🔒 Premium Herbal Intelligence
+</h2>
+
+<p style="margin-top:10px;">
+Advanced medicinal analysis,
+dosage intelligence,
+AI chemistry,
+and research system.
+</p>
+
+</div>
+`
+:
+''
+}
+
+</div>
+
+`;
+
+document.body.appendChild(modal);
+
+}
+
+searchInput.addEventListener("input",(e)=>{
+loadPlants(e.target.value);
+});
+
+// Wake up Render before main fetch
+fetch("https://naturecore-ai.onrender.com/")
+  .catch(()=>{});
+
+// Give Render 3 seconds to wake up, then load
+setTimeout(fetchPlants, 3000);
+
+let chatHistory = [];
+let questionCount = parseInt(localStorage.getItem("ncai_questions") || "0");
+let isPremium = localStorage.getItem("ncai_premium") === "true";
+const FREE_LIMIT = 3;
+const PAYSTACK_KEY = "pk_test_9c292300d5642c1a160a82de56e2a4ad93bf941a";
+
+function checkPremiumStatus(){
+  const expiry = localStorage.getItem("ncai_premium_expiry");
+  if(expiry && new Date() > new Date(expiry)){
+    localStorage.removeItem("ncai_premium");
+    localStorage.removeItem("ncai_premium_expiry");
+    isPremium = false;
+  }
+  updatePremiumBadge();
+}
+
+function updatePremiumBadge(){
+  const header = document.querySelector("header h1") || document.querySelector("h1");
+  const existing = document.getElementById("premiumBadge");
+  if(existing) existing.remove();
+  
+  if(isPremium){
+    const badge = document.createElement("div");
+    badge.id = "premiumBadge";
+    badge.style.cssText = "display:inline-block;background:#22c55e;color:#000;font-size:11px;font-weight:bold;padding:3px 10px;border-radius:20px;margin-top:8px;";
+    badge.textContent = "🌿 LEVEL 1 — HERBALIST";
+    if(header) header.parentNode.insertBefore(badge, header.nextSibling);
+  } else {
+    const badge = document.createElement("div");
+    badge.id = "premiumBadge";
+    badge.style.cssText = "display:inline-block;background:#1e293b;color:#64748b;font-size:11px;padding:3px 10px;border-radius:20px;margin-top:8px;cursor:pointer;border:1px solid #334155;";
+    badge.textContent = "Free — " + (FREE_LIMIT - questionCount) + " questions left today";
+    badge.onclick = showPaywall;
+    if(header) header.parentNode.insertBefore(badge, header.nextSibling);
+  }
+}
+
+function showPaywall(){
+  document.getElementById("paywallModal").style.display = "flex";
+}
+
+function closePaywall(){
+  document.getElementById("paywallModal").style.display = "none";
+}
+
+function initiatePayment(){
+  const email = prompt("Enter your email address to continue:");
+  if(!email || !email.includes("@")) {
+    alert("Please enter a valid email address");
+    return;
+  }
+  
+  const handler = PaystackPop.setup({
+    key: PAYSTACK_KEY,
+    email: email,
+    amount: 500000,
+    currency: "NGN",
+    ref: "NCAI_" + Date.now(),
+    metadata: {
+      custom_fields: [{
+        display_name: "Plan",
+        variable_name: "plan",
+        value: "Level 1 - Herbalist"
+      }]
+    },
+    callback: function(response){
+      // Payment successful
+      isPremium = true;
+      localStorage.setItem("ncai_premium", "true");
+      localStorage.setItem("ncai_premium_email", email);
+      localStorage.setItem("ncai_premium_ref", response.reference);
+      // Set expiry to 30 days
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + 30);
+      localStorage.setItem("ncai_premium_expiry", expiry.toISOString());
+      
+      closePaywall();
+      updatePremiumBadge();
+      
+      addMessage("assistant", "🎉 Welcome to Level 1 — Herbalist!\n\nYour premium access is now active. You have unlimited AI consultations for 30 days.\n\nYou can now ask me anything about medicinal plants, formulations, treatments, and natural medicine. Let\'s continue!");
+    },
+    onClose: function(){
+      console.log("Payment closed");
+    }
+  });
+  handler.openIframe();
+}
+
+// Reset question count daily
+function checkDailyReset(){
+  const lastDate = localStorage.getItem("ncai_last_date");
+  const today = new Date().toDateString();
+  if(lastDate !== today){
+    questionCount = 0;
+    localStorage.setItem("ncai_questions", "0");
+    localStorage.setItem("ncai_last_date", today);
+  }
+}
+
+checkDailyReset();
+checkPremiumStatus();
+
+function clearChat(){
+  chatHistory = [];
+  document.getElementById("chatMessages").innerHTML = "";
+}
+
+function addMessage(role, text){
+  const msgs = document.getElementById("chatMessages");
+  const isUser = role === "user";
+  const div = document.createElement("div");
+  div.style.cssText = isUser
+    ? "align-self:flex-end;background:#22c55e22;border:1px solid #22c55e44;color:#e2e8f0;padding:12px 16px;border-radius:16px 16px 4px 16px;max-width:85%;font-size:14px;line-height:1.6;"
+    : "align-self:flex-start;background:#0f172a;border:1px solid #1e293b;color:#cbd5e1;padding:12px 16px;border-radius:4px 16px 16px 16px;max-width:95%;font-size:14px;line-height:1.8;position:relative;";
+  
+  if(isUser){
+    div.textContent = text;
+  } else {
+    div.innerHTML = text
+      .replace(/\*\*(.*?)\*\*/g,"<strong style='color:#22c55e'>$1</strong>")
+      .replace(/\n/g,"<br>");
+    
+    // Add complete badge
+    const badge = document.createElement("div");
+    badge.style.cssText = "text-align:right;margin-top:8px;font-size:11px;color:#22c55e;opacity:0.7;";
+    badge.textContent = "✓ Complete";
+    div.appendChild(badge);
+  }
+  
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+async function askAI(){
+  const input = document.getElementById("aiInput");
+  const btn = document.getElementById("askBtn");
+  const typing = document.getElementById("typingIndicator");
+  const question = input.value.trim();
+  if(!question) return;
+
+  // Check free limit
+  if(!isPremium && questionCount >= FREE_LIMIT){
+    showPaywall();
+    return;
+  }
+
+  // Track question count for free users
+  if(!isPremium){
+    questionCount++;
+    localStorage.setItem("ncai_questions", questionCount.toString());
+    updatePremiumBadge();
+  }
+
+  addMessage("user", question);
+  chatHistory.push({role:"user", content: question});
+  input.value = "";
+  input.style.height = "44px";
+
+  btn.textContent = "⏳";
+  btn.disabled = true;
+  typing.style.display = "block";
+
+  // Animate dots
+  let dotCount = 0;
+  const dotInterval = setInterval(()=>{
+    dotCount = (dotCount+1) % 4;
+    const d = document.getElementById("dots");
+    if(d) d.textContent = ".".repeat(dotCount+1);
+  }, 400);
+
+  let attempts = 0;
+  async function tryAsk(){
+    attempts++;
+    try{
+      const res = await fetch("https://naturecore-ai.onrender.com/ask",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          question,
+          history: chatHistory.slice(-6)
+        })
+      });
+      if(!res.ok) throw new Error("Server error");
+      const data = await res.json();
+      
+      clearInterval(dotInterval);
+      typing.style.display = "none";
+      addMessage("assistant", data.answer);
+      chatHistory.push({role:"assistant", content: data.answer});
+      
+      btn.textContent = "Send";
+      btn.disabled = false;
+    }catch(e){
+      if(attempts < 3){
+        const d = document.getElementById("dots");
+        if(d) d.textContent = " (retrying "+attempts+"/3)";
+        setTimeout(tryAsk, 4000);
+      }else{
+        clearInterval(dotInterval);
+        typing.style.display = "none";
+        addMessage("assistant", "❌ Could not reach AI. Check connection and try again.");
+        btn.textContent = "Send";
+        btn.disabled = false;
+      }
+    }
+  }
+  tryAsk();
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  const input = document.getElementById("aiInput");
+  if(input){
+    input.addEventListener("keypress", function(e){
+      if(e.key === "Enter" && !e.shiftKey){
+        e.preventDefault();
+        askAI();
+      }
+    });
+  }
+});
+
+
+</script>
+
+
+<div id="paywallModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;">
+<div style="background:#0f172a;border:1px solid #22c55e;border-radius:20px;padding:32px;max-width:400px;width:90%;text-align:center;position:relative;">
+  <div style="font-size:40px;margin-bottom:16px;">🌿</div>
+  <h2 style="color:#22c55e;font-size:22px;margin-bottom:8px;">Upgrade to Level 1</h2>
+  <p style="color:#94a3b8;font-size:14px;margin-bottom:24px;">You've used your 3 free questions today.</p>
+  
+  <div style="background:#1e293b;border-radius:12px;padding:16px;margin-bottom:24px;text-align:left;">
+    <p style="color:#22c55e;font-weight:bold;margin-bottom:12px;">Level 1 — Herbalist Access</p>
+    <div style="color:#cbd5e1;font-size:13px;display:flex;flex-direction:column;gap:8px;">
+      <span>✅ Unlimited AI consultations</span>
+      <span>✅ Full plant database access</span>
+      <span>✅ Multi-language support</span>
+      <span>✅ Formulation guidance</span>
+      <span>✅ Expert biochemical analysis</span>
+      <span>✅ Conversation history</span>
+    </div>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <span style="color:#facc15;font-size:28px;font-weight:bold;">₦5,000</span>
+    <span style="color:#64748b;font-size:14px;">/month</span>
+  </div>
+
+  <button onclick="initiatePayment()" 
+    style="width:100%;padding:14px;background:#22c55e;color:#000;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;margin-bottom:12px;">
+    🔓 Unlock Level 1 Now
+  </button>
+  
+  <button onclick="closePaywall()" 
+    style="width:100%;padding:10px;background:none;color:#64748b;border:1px solid #334155;border-radius:12px;font-size:14px;cursor:pointer;">
+    Maybe later (3 questions used)
+  </button>
+</div>
+</div>
+</body>
+</html>
