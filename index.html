@@ -186,6 +186,7 @@ cursor:pointer;
   to { transform: rotate(360deg); }
 }
 </style>
+<script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
 
 <body>
@@ -454,6 +455,106 @@ fetch("https://naturecore-ai.onrender.com/")
 setTimeout(fetchPlants, 3000);
 
 let chatHistory = [];
+let questionCount = parseInt(localStorage.getItem("ncai_questions") || "0");
+let isPremium = localStorage.getItem("ncai_premium") === "true";
+const FREE_LIMIT = 3;
+const PAYSTACK_KEY = "pk_test_9c292300d5642c1a160a82de56e2a4ad93bf941a";
+
+function checkPremiumStatus(){
+  const expiry = localStorage.getItem("ncai_premium_expiry");
+  if(expiry && new Date() > new Date(expiry)){
+    localStorage.removeItem("ncai_premium");
+    localStorage.removeItem("ncai_premium_expiry");
+    isPremium = false;
+  }
+  updatePremiumBadge();
+}
+
+function updatePremiumBadge(){
+  const header = document.querySelector("header h1") || document.querySelector("h1");
+  const existing = document.getElementById("premiumBadge");
+  if(existing) existing.remove();
+  
+  if(isPremium){
+    const badge = document.createElement("div");
+    badge.id = "premiumBadge";
+    badge.style.cssText = "display:inline-block;background:#22c55e;color:#000;font-size:11px;font-weight:bold;padding:3px 10px;border-radius:20px;margin-top:8px;";
+    badge.textContent = "🌿 LEVEL 1 — HERBALIST";
+    if(header) header.parentNode.insertBefore(badge, header.nextSibling);
+  } else {
+    const badge = document.createElement("div");
+    badge.id = "premiumBadge";
+    badge.style.cssText = "display:inline-block;background:#1e293b;color:#64748b;font-size:11px;padding:3px 10px;border-radius:20px;margin-top:8px;cursor:pointer;border:1px solid #334155;";
+    badge.textContent = "Free — " + (FREE_LIMIT - questionCount) + " questions left today";
+    badge.onclick = showPaywall;
+    if(header) header.parentNode.insertBefore(badge, header.nextSibling);
+  }
+}
+
+function showPaywall(){
+  document.getElementById("paywallModal").style.display = "flex";
+}
+
+function closePaywall(){
+  document.getElementById("paywallModal").style.display = "none";
+}
+
+function initiatePayment(){
+  const email = prompt("Enter your email address to continue:");
+  if(!email || !email.includes("@")) {
+    alert("Please enter a valid email address");
+    return;
+  }
+  
+  const handler = PaystackPop.setup({
+    key: PAYSTACK_KEY,
+    email: email,
+    amount: 500000,
+    currency: "NGN",
+    ref: "NCAI_" + Date.now(),
+    metadata: {
+      custom_fields: [{
+        display_name: "Plan",
+        variable_name: "plan",
+        value: "Level 1 - Herbalist"
+      }]
+    },
+    callback: function(response){
+      // Payment successful
+      isPremium = true;
+      localStorage.setItem("ncai_premium", "true");
+      localStorage.setItem("ncai_premium_email", email);
+      localStorage.setItem("ncai_premium_ref", response.reference);
+      // Set expiry to 30 days
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + 30);
+      localStorage.setItem("ncai_premium_expiry", expiry.toISOString());
+      
+      closePaywall();
+      updatePremiumBadge();
+      
+      addMessage("assistant", "🎉 Welcome to Level 1 — Herbalist!\n\nYour premium access is now active. You have unlimited AI consultations for 30 days.\n\nYou can now ask me anything about medicinal plants, formulations, treatments, and natural medicine. Let\'s continue!");
+    },
+    onClose: function(){
+      console.log("Payment closed");
+    }
+  });
+  handler.openIframe();
+}
+
+// Reset question count daily
+function checkDailyReset(){
+  const lastDate = localStorage.getItem("ncai_last_date");
+  const today = new Date().toDateString();
+  if(lastDate !== today){
+    questionCount = 0;
+    localStorage.setItem("ncai_questions", "0");
+    localStorage.setItem("ncai_last_date", today);
+  }
+}
+
+checkDailyReset();
+checkPremiumStatus();
 
 function clearChat(){
   chatHistory = [];
@@ -493,6 +594,19 @@ async function askAI(){
   const typing = document.getElementById("typingIndicator");
   const question = input.value.trim();
   if(!question) return;
+
+  // Check free limit
+  if(!isPremium && questionCount >= FREE_LIMIT){
+    showPaywall();
+    return;
+  }
+
+  // Track question count for free users
+  if(!isPremium){
+    questionCount++;
+    localStorage.setItem("ncai_questions", questionCount.toString());
+    updatePremiumBadge();
+  }
 
   addMessage("user", question);
   chatHistory.push({role:"user", content: question});
@@ -565,5 +679,40 @@ document.addEventListener("DOMContentLoaded", function(){
 
 </script>
 
+
+<div id="paywallModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center;">
+<div style="background:#0f172a;border:1px solid #22c55e;border-radius:20px;padding:32px;max-width:400px;width:90%;text-align:center;position:relative;">
+  <div style="font-size:40px;margin-bottom:16px;">🌿</div>
+  <h2 style="color:#22c55e;font-size:22px;margin-bottom:8px;">Upgrade to Level 1</h2>
+  <p style="color:#94a3b8;font-size:14px;margin-bottom:24px;">You've used your 3 free questions today.</p>
+  
+  <div style="background:#1e293b;border-radius:12px;padding:16px;margin-bottom:24px;text-align:left;">
+    <p style="color:#22c55e;font-weight:bold;margin-bottom:12px;">Level 1 — Herbalist Access</p>
+    <div style="color:#cbd5e1;font-size:13px;display:flex;flex-direction:column;gap:8px;">
+      <span>✅ Unlimited AI consultations</span>
+      <span>✅ Full plant database access</span>
+      <span>✅ Multi-language support</span>
+      <span>✅ Formulation guidance</span>
+      <span>✅ Expert biochemical analysis</span>
+      <span>✅ Conversation history</span>
+    </div>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <span style="color:#facc15;font-size:28px;font-weight:bold;">₦5,000</span>
+    <span style="color:#64748b;font-size:14px;">/month</span>
+  </div>
+
+  <button onclick="initiatePayment()" 
+    style="width:100%;padding:14px;background:#22c55e;color:#000;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;margin-bottom:12px;">
+    🔓 Unlock Level 1 Now
+  </button>
+  
+  <button onclick="closePaywall()" 
+    style="width:100%;padding:10px;background:none;color:#64748b;border:1px solid #334155;border-radius:12px;font-size:14px;cursor:pointer;">
+    Maybe later (3 questions used)
+  </button>
+</div>
+</div>
 </body>
 </html>
