@@ -1,4 +1,4 @@
-const CACHE = "naturecore-v1";
+const CACHE = "naturecore-v2";
 const ASSETS = [
   "/naturecore-ai/",
   "/naturecore-ai/index.html",

@@ -774,5 +774,79 @@ function dismissInstall(){
   if(banner) banner.style.display = "none";
 }
 </script>
+
+<div id="settingsModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:1000;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;">
+<div style="background:#0f172a;border:1px solid #1e293b;border-radius:24px;width:100%;max-width:500px;margin:auto;overflow:hidden;">
+
+  <!-- Header -->
+  <div style="padding:20px 24px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center;">
+    <h2 style="color:white;font-size:18px;margin:0;">⚙️ Account Settings</h2>
+    <button onclick="closeSettings()" style="background:none;border:none;color:#64748b;font-size:24px;cursor:pointer;">×</button>
+  </div>
+
+  <!-- Profile Section -->
+  <div style="padding:24px;border-bottom:1px solid #1e293b;">
+    <div style="color:#22c55e;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">Profile</div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div style="width:56px;height:56px;background:#22c55e22;border:2px solid #22c55e44;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">🌿</div>
+      <div>
+        <div id="settingsName" style="font-weight:bold;color:white;font-size:16px;">Loading...</div>
+        <div id="settingsEmail" style="color:#64748b;font-size:13px;">Loading...</div>
+        <div id="settingsLevel" style="color:#22c55e;font-size:12px;margin-top:2px;">Free Explorer</div>
+      </div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;">Full Name</label>
+      <input id="editName" style="width:100%;padding:12px;background:#020617;border:1px solid #334155;border-radius:10px;color:white;font-size:14px;outline:none;">
+    </div>
+    <button onclick="updateProfile()" style="background:#22c55e;color:#000;border:none;border-radius:10px;padding:10px 20px;font-weight:bold;cursor:pointer;font-size:14px;">Save Changes</button>
+    <div id="profileMsg" style="margin-top:8px;font-size:13px;display:none;"></div>
+  </div>
+
+  <!-- Password Section -->
+  <div style="padding:24px;border-bottom:1px solid #1e293b;">
+    <div style="color:#22c55e;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">Security</div>
+    <div style="margin-bottom:12px;">
+      <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;">New Password</label>
+      <input type="password" id="newPassword" placeholder="Min 8 characters" style="width:100%;padding:12px;background:#020617;border:1px solid #334155;border-radius:10px;color:white;font-size:14px;outline:none;">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-size:13px;color:#94a3b8;margin-bottom:6px;">Confirm New Password</label>
+      <input type="password" id="confirmPassword" placeholder="Repeat new password" style="width:100%;padding:12px;background:#020617;border:1px solid #334155;border-radius:10px;color:white;font-size:14px;outline:none;">
+    </div>
+    <button onclick="changePassword()" style="background:#1e293b;color:white;border:1px solid #334155;border-radius:10px;padding:10px 20px;font-weight:bold;cursor:pointer;font-size:14px;">Change Password</button>
+    <div id="passwordMsg" style="margin-top:8px;font-size:13px;display:none;"></div>
+  </div>
+
+  <!-- Subscription Section -->
+  <div style="padding:24px;border-bottom:1px solid #1e293b;">
+    <div style="color:#22c55e;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">Subscription</div>
+    <div id="subStatus" style="background:#020617;border:1px solid #1e293b;border-radius:12px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div id="subPlan" style="font-weight:bold;color:white;font-size:15px;">Free Explorer</div>
+          <div id="subDetails" style="color:#64748b;font-size:13px;margin-top:2px;">3 AI questions per day</div>
+        </div>
+        <div id="subBadge" style="background:#1e293b;color:#64748b;font-size:11px;padding:4px 10px;border-radius:20px;">Free</div>
+      </div>
+    </div>
+    <div id="upgradeFromSettings" style=""></div>
+  </div>
+
+  <!-- Sign Out + Delete -->
+  <div style="padding:24px;">
+    <div style="color:#22c55e;font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">Account Actions</div>
+    <button onclick="logout()" style="width:100%;background:#1e293b;color:white;border:1px solid #334155;border-radius:10px;padding:12px;font-weight:bold;cursor:pointer;font-size:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
+      🚪 Sign Out
+    </button>
+    <button onclick="confirmDelete()" style="width:100%;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px;font-weight:bold;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;">
+      🗑️ Delete Account
+    </button>
+    <div id="deleteMsg" style="margin-top:8px;font-size:13px;color:#64748b;display:none;text-align:center;">Type DELETE to confirm: <input id="deleteConfirm" style="background:#020617;border:1px solid #ef4444;border-radius:6px;color:white;padding:6px;font-size:13px;width:100px;outline:none;margin:0 8px;"> <button onclick="deleteAccount()" style="background:#ef4444;color:white;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;">Confirm</button></div>
+  </div>
+
+</div>
+</div>
+
 </body>
 </html>
