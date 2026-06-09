@@ -187,6 +187,7 @@ cursor:pointer;
 }
 </style>
 <script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -233,6 +234,31 @@ placeholder="Search acne, malaria, ginger..."
     style="padding:12px 18px;background:#22c55e;color:#000;border:none;border-radius:12px;font-weight:bold;cursor:pointer;white-space:nowrap;min-width:80px;">Send</button>
 </div>
 </div>
+
+<div id="formulationSection" style="max-width:700px;margin:30px auto 20px;background:#0f172a;border-radius:20px;border:1px solid #22c55e33;overflow:hidden;">
+<div style="padding:16px 20px;border-bottom:1px solid #22c55e22;display:flex;justify-content:space-between;align-items:center;">
+  <div>
+    <h2 style="color:#22c55e;font-size:18px;margin:0;">🧪 Formulation Assistant</h2>
+    <p style="color:#64748b;font-size:12px;margin:4px 0 0;">Create herbal products — creams, soaps, oils, teas</p>
+  </div>
+  <span style="background:#22c55e22;color:#22c55e;font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid #22c55e44;">Level 1</span>
+</div>
+<div style="padding:16px;">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+    <button onclick="setFormGoal(this)" data-goal="Natural face cream for acne" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:8px 12px;border-radius:20px;font-size:12px;cursor:pointer;">Acne cream</button>
+    <button onclick="setFormGoal(this)" data-goal="Herbal hair growth oil using African plants" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:8px 12px;border-radius:20px;font-size:12px;cursor:pointer;">Hair oil</button>
+    <button onclick="setFormGoal(this)" data-goal="Natural herbal soap for skin glow" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:8px 12px;border-radius:20px;font-size:12px;cursor:pointer;">Glow soap</button>
+    <button onclick="setFormGoal(this)" data-goal="Herbal tea blend for diabetes management" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:8px 12px;border-radius:20px;font-size:12px;cursor:pointer;">Diabetes tea</button>
+    <button onclick="setFormGoal(this)" data-goal="Anti-aging face serum using African botanical ingredients" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:8px 12px;border-radius:20px;font-size:12px;cursor:pointer;">Anti-aging serum</button>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <input id="formulaInput" placeholder="e.g. Body lotion for stretch marks using shea butter..." style="flex:1;padding:12px;background:#020617;color:white;border:1px solid #334155;border-radius:12px;font-size:14px;outline:none;">
+    <button onclick="getFormulation()" id="formulaBtn" style="padding:12px 18px;background:#22c55e;color:#000;border:none;border-radius:12px;font-weight:bold;cursor:pointer;white-space:nowrap;">Create</button>
+  </div>
+  <div id="formulaResult" style="margin-top:16px;color:#cbd5e1;line-height:1.8;font-size:14px;max-height:500px;overflow-y:auto;padding-right:4px;"></div>
+</div>
+</div>
+
 <div class="stats">
 
 <div class="stat-card">
@@ -714,5 +740,228 @@ document.addEventListener("DOMContentLoaded", function(){
   </button>
 </div>
 </div>
+
+<script>
+const _SB_URL = "https://kwuutumzvdcsmbioqhbh.supabase.co";
+const _SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3dXV0dW16dmRjc21iaW9xaGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NTAzOTEsImV4cCI6MjA5NTMyNjM5MX0.7_Eatvd75ez4kGv745Fd7bF6pyKMp1LYl-hNPvierbA";
+const sb = supabase.createClient(_SB_URL, _SB_KEY);
+let currentUser = null;
+let userProfile = null;
+
+async function initAuth(){
+  try{
+    const { data: { session } } = await sb.auth.getSession();
+    if(session){
+      currentUser = session.user;
+      const { data } = await sb.from("profiles").select("*").eq("id", currentUser.id).single();
+      if(data){
+        userProfile = data;
+        const today = new Date().toISOString().split("T")[0];
+        if(data.is_premium){
+          const expiry = data.premium_expiry ? new Date(data.premium_expiry) : null;
+          if(!expiry || expiry > new Date()){
+            isPremium = true;
+            localStorage.setItem("ncai_premium","true");
+          }
+        }
+        if(data.last_question_date === today){
+          questionCount = data.questions_today || 0;
+        }
+      }
+      renderUserMenu();
+    } else {
+      renderGuestMenu();
+    }
+    updatePremiumBadge();
+  } catch(e){
+    console.log("Auth init error:", e.message);
+    renderGuestMenu();
+  }
+}
+
+async function savePremiumToDB(ref){
+  if(!currentUser) return;
+  const expiry = new Date();
+  expiry.setDate(expiry.getDate() + 30);
+  await sb.from("profiles").update({
+    is_premium: true,
+    premium_expiry: expiry.toISOString(),
+    paystack_ref: ref,
+    level: 1
+  }).eq("id", currentUser.id);
+}
+
+function renderGuestMenu(){
+  const ex = document.getElementById("ncaiUserMenu");
+  if(ex) ex.remove();
+  const el = document.createElement("div");
+  el.id = "ncaiUserMenu";
+  el.style.cssText = "position:fixed;top:14px;right:14px;z-index:900;";
+  el.innerHTML = `<a href="auth.html" style="background:#22c55e;color:#000;padding:10px 18px;border-radius:10px;font-weight:bold;font-size:13px;text-decoration:none;display:inline-block;">Sign In</a>`;
+  document.body.appendChild(el);
+}
+
+function renderUserMenu(){
+  const ex = document.getElementById("ncaiUserMenu");
+  if(ex) ex.remove();
+  const name = (userProfile && userProfile.full_name) ? userProfile.full_name : currentUser.email.split("@")[0];
+  const el = document.createElement("div");
+  el.id = "ncaiUserMenu";
+  el.style.cssText = "position:fixed;top:14px;right:14px;z-index:900;";
+  el.innerHTML = `
+    <div onclick="toggleMenu()" style="background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:8px 14px;font-size:13px;color:#94a3b8;cursor:pointer;user-select:none;">
+      👤 ${name}${isPremium ? ' <span style="color:#22c55e">★</span>' : ''}
+    </div>
+    <div id="ncaiDropdown" style="display:none;position:absolute;top:42px;right:0;background:#0f172a;border:1px solid #1e293b;border-radius:12px;min-width:200px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+      <div style="padding:10px 14px;font-size:12px;color:#64748b;border-bottom:1px solid #1e293b;">${currentUser.email}</div>
+      <div style="padding:10px 14px;font-size:13px;color:${isPremium ? '#22c55e' : '#94a3b8'};">${isPremium ? '🌿 Level 1 — Herbalist' : '🆓 Free Explorer'}</div>
+      ${!isPremium ? '<div onclick="toggleMenu();showPaywall();" style="padding:10px 14px;font-size:13px;color:#facc15;cursor:pointer;border-top:1px solid #1e293b;">⬆️ Upgrade to Level 1</div>' : ''}
+      <div onclick="openSettings()" style="padding:10px 14px;font-size:13px;color:#94a3b8;cursor:pointer;border-top:1px solid #1e293b;">⚙️ Account Settings</div>
+      <div onclick="doSignOut()" style="padding:10px 14px;font-size:13px;color:#ef4444;cursor:pointer;border-top:1px solid #1e293b;">🚪 Sign Out</div>
+    </div>`;
+  document.body.appendChild(el);
+}
+
+function toggleMenu(){
+  const d = document.getElementById("ncaiDropdown");
+  if(d) d.style.display = d.style.display === "none" ? "block" : "none";
+}
+
+async function doSignOut(){
+  await sb.auth.signOut();
+  currentUser = null;
+  userProfile = null;
+  isPremium = false;
+  localStorage.removeItem("ncai_premium");
+  renderGuestMenu();
+  updatePremiumBadge();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener("click", function(e){
+  const menu = document.getElementById("ncaiUserMenu");
+  if(menu && !menu.contains(e.target)){
+    const d = document.getElementById("ncaiDropdown");
+    if(d) d.style.display = "none";
+  }
+});
+
+window.addEventListener("DOMContentLoaded", initAuth);
+</script>
+
+
+<div id="settingsModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:1000;justify-content:center;align-items:flex-start;overflow-y:auto;padding:20px;">
+<div style="background:#0f172a;border:1px solid #1e293b;border-radius:20px;width:100%;max-width:480px;margin:20px auto;overflow:hidden;">
+  <div style="padding:18px 20px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center;">
+    <h2 style="color:white;font-size:17px;margin:0;">⚙️ Account Settings</h2>
+    <button onclick="closeSettings()" style="background:none;border:none;color:#64748b;font-size:22px;cursor:pointer;line-height:1;">×</button>
+  </div>
+  <div style="padding:20px;border-bottom:1px solid #1e293b;">
+    <div style="font-size:11px;color:#22c55e;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Profile</div>
+    <div id="stgUserInfo" style="color:#64748b;font-size:14px;margin-bottom:16px;"></div>
+    <label style="font-size:13px;color:#94a3b8;display:block;margin-bottom:6px;">Full Name</label>
+    <input id="stgName" style="width:100%;padding:11px;background:#020617;border:1px solid #334155;border-radius:10px;color:white;font-size:14px;outline:none;margin-bottom:12px;">
+    <button onclick="saveProfile()" style="background:#22c55e;color:#000;border:none;border-radius:10px;padding:10px 20px;font-weight:bold;cursor:pointer;font-size:13px;">Save Name</button>
+    <div id="stgProfileMsg" style="margin-top:8px;font-size:13px;display:none;"></div>
+  </div>
+  <div style="padding:20px;border-bottom:1px solid #1e293b;">
+    <div style="font-size:11px;color:#22c55e;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Change Password</div>
+    <input type="password" id="stgPw1" placeholder="New password (min 8 chars)" style="width:100%;padding:11px;background:#020617;border:1px solid #334155;border-radius:10px;color:white;font-size:14px;outline:none;margin-bottom:10px;">
+    <input type="password" id="stgPw2" placeholder="Confirm new password" style="width:100%;padding:11px;background:#020617;border:1px solid #334155;border-radius:10px;color:white;font-size:14px;outline:none;margin-bottom:12px;">
+    <button onclick="savePassword()" style="background:#1e293b;color:white;border:1px solid #334155;border-radius:10px;padding:10px 20px;font-weight:bold;cursor:pointer;font-size:13px;">Change Password</button>
+    <div id="stgPwMsg" style="margin-top:8px;font-size:13px;display:none;"></div>
+  </div>
+  <div style="padding:20px;border-bottom:1px solid #1e293b;">
+    <div style="font-size:11px;color:#22c55e;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Subscription</div>
+    <div id="stgSubInfo" style="background:#020617;border:1px solid #1e293b;border-radius:10px;padding:14px;margin-bottom:12px;font-size:14px;color:#94a3b8;"></div>
+    <div id="stgUpgradeBtn"></div>
+  </div>
+  <div style="padding:20px;">
+    <div style="font-size:11px;color:#22c55e;font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Danger Zone</div>
+    <button onclick="doSignOut()" style="width:100%;background:#1e293b;color:white;border:1px solid #334155;border-radius:10px;padding:12px;font-weight:bold;cursor:pointer;font-size:14px;margin-bottom:10px;">🚪 Sign Out</button>
+    <button onclick="showDeleteConfirm()" style="width:100%;background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px;font-weight:bold;cursor:pointer;font-size:14px;">🗑️ Delete My Account</button>
+    <div id="stgDeleteConfirm" style="display:none;margin-top:12px;background:#020617;border:1px solid #ef4444;border-radius:10px;padding:14px;">
+      <p style="color:#ef4444;font-size:13px;margin-bottom:10px;">Type DELETE to confirm permanent deletion:</p>
+      <div style="display:flex;gap:8px;">
+        <input id="stgDeleteInput" placeholder="Type DELETE" style="flex:1;padding:10px;background:#0f172a;border:1px solid #ef4444;border-radius:8px;color:white;font-size:13px;outline:none;">
+        <button onclick="confirmDelete()" style="background:#ef4444;color:white;border:none;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:pointer;font-size:13px;">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function openSettings(){
+  const modal = document.getElementById("settingsModal");
+  modal.style.display = "flex";
+  const d = document.getElementById("ncaiDropdown");
+  if(d) d.style.display = "none";
+  if(currentUser){
+    document.getElementById("stgUserInfo").textContent = currentUser.email;
+    const name = (userProfile && userProfile.full_name) ? userProfile.full_name : "";
+    document.getElementById("stgName").value = name;
+    document.getElementById("stgSubInfo").innerHTML = isPremium
+      ? "🌿 <strong style=\'color:#22c55e\'>Level 1 — Herbalist</strong><br><small>Unlimited AI consultations active</small>"
+      : "🆓 <strong>Free Explorer</strong><br><small>3 AI questions per day</small>";
+    document.getElementById("stgUpgradeBtn").innerHTML = isPremium ? "" :
+      `<button onclick="closeSettings();showPaywall();" style="width:100%;background:#22c55e;color:#000;border:none;border-radius:10px;padding:12px;font-weight:bold;cursor:pointer;font-size:14px;">⬆️ Upgrade to Level 1 — ₦5,000/month</button>`;
+  } else {
+    window.location.href = "auth.html";
+  }
+}
+
+function closeSettings(){
+  document.getElementById("settingsModal").style.display = "none";
+}
+
+async function saveProfile(){
+  const name = document.getElementById("stgName").value.trim();
+  const msg = document.getElementById("stgProfileMsg");
+  if(!name){ showStgMsg(msg,"Enter your name","error"); return; }
+  const { error } = await sb.auth.updateUser({data:{full_name:name}});
+  if(!error){
+    await sb.from("profiles").update({full_name:name}).eq("id",currentUser.id);
+    if(userProfile) userProfile.full_name = name;
+    renderUserMenu();
+    showStgMsg(msg,"✅ Name updated!","success");
+  } else { showStgMsg(msg,error.message,"error"); }
+}
+
+async function savePassword(){
+  const p1 = document.getElementById("stgPw1").value;
+  const p2 = document.getElementById("stgPw2").value;
+  const msg = document.getElementById("stgPwMsg");
+  if(p1.length < 8){ showStgMsg(msg,"Min 8 characters","error"); return; }
+  if(p1 !== p2){ showStgMsg(msg,"Passwords do not match","error"); return; }
+  const { error } = await sb.auth.updateUser({password:p1});
+  if(!error){
+    document.getElementById("stgPw1").value = "";
+    document.getElementById("stgPw2").value = "";
+    showStgMsg(msg,"✅ Password changed!","success");
+  } else { showStgMsg(msg,error.message,"error"); }
+}
+
+function showDeleteConfirm(){
+  document.getElementById("stgDeleteConfirm").style.display = "block";
+}
+
+async function confirmDelete(){
+  const val = document.getElementById("stgDeleteInput").value;
+  if(val !== "DELETE"){ alert("Type DELETE to confirm"); return; }
+  await sb.from("profiles").delete().eq("id",currentUser.id);
+  await sb.auth.signOut();
+  alert("Account deleted. Sorry to see you go.");
+  window.location.href = "index.html";
+}
+
+function showStgMsg(el, text, type){
+  el.textContent = text;
+  el.style.color = type === "success" ? "#22c55e" : "#ef4444";
+  el.style.display = "block";
+  setTimeout(()=>{ el.style.display="none"; }, 3000);
+}
+</script>
+
 </body>
 </html>
