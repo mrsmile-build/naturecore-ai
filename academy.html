@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academy — Nature Core AI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#22c55e">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--green:#22c55e;--dark:#020617;--card:#0f172a;--border:#1e293b;--text:#cbd5e1;--muted:#64748b;}
+body{font-family:"Segoe UI",Arial,sans-serif;background:var(--dark);color:white;min-height:100vh;}
+nav{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(2,6,23,0.95);z-index:100;}
+.logo{font-size:18px;font-weight:bold;color:var(--green);text-decoration:none;}
+.logo span{color:white;}
+.nav-right{display:flex;gap:12px;align-items:center;}
+.nav-right a{color:var(--text);text-decoration:none;font-size:14px;}
+.nav-right a.active{color:var(--green);}
+.container{max-width:900px;margin:0 auto;padding:30px 20px;}
+.page-header{margin-bottom:32px;}
+.page-header h1{font-size:28px;font-weight:800;margin-bottom:6px;}
+.page-header p{color:var(--muted);font-size:15px;}
+.levels-grid{display:flex;flex-direction:column;gap:16px;}
+.level-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;transition:border-color 0.2s;}
+.level-card.unlocked{border-color:#22c55e44;}
+.level-card.locked{opacity:0.6;}
+.level-card.current{border-color:var(--green);}
+.level-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.level-num{font-size:12px;color:var(--green);font-weight:bold;letter-spacing:1px;text-transform:uppercase;}
+.level-badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:bold;}
+.badge-free{background:#22c55e22;color:#22c55e;border:1px solid #22c55e44;}
+.badge-locked{background:#1e293b;color:var(--muted);}
+.badge-passed{background:#22c55e;color:#000;}
+.badge-waiting{background:#facc1522;color:#facc15;border:1px solid #facc1544;}
+.level-name{font-size:20px;font-weight:700;margin-bottom:6px;}
+.level-desc{font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.6;}
+.level-meta{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.level-meta-item{font-size:13px;color:var(--text);}
+.level-meta-item span{color:var(--green);font-weight:bold;}
+.topics-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
+.topic-tag{background:#1e293b;border:1px solid var(--border);padding:5px 10px;border-radius:8px;font-size:12px;color:var(--text);}
+.level-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.btn{padding:11px 20px;border-radius:10px;font-weight:bold;font-size:14px;cursor:pointer;border:none;text-decoration:none;display:inline-block;text-align:center;}
+.btn-primary{background:var(--green);color:#000;}
+.btn-secondary{background:#1e293b;color:white;border:1px solid var(--border);}
+.btn-disabled{background:#1e293b;color:var(--muted);cursor:not-allowed;}
+.cert-badge{display:inline-flex;align-items:center;gap:6px;background:#22c55e22;border:1px solid #22c55e44;color:#22c55e;padding:6px 12px;border-radius:8px;font-size:13px;}
+
+/* EXAM MODAL */
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;overflow-y:auto;padding:20px;}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:20px;max-width:700px;margin:20px auto;overflow:hidden;}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-header h2{font-size:18px;margin:0;}
+.close-btn{background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;}
+.modal-body{padding:24px;}
+.progress-bar{background:#1e293b;border-radius:20px;height:6px;margin-bottom:24px;}
+.progress-fill{background:var(--green);height:6px;border-radius:20px;transition:width 0.3s;}
+.question-num{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.question-text{font-size:17px;font-weight:600;margin-bottom:20px;line-height:1.5;}
+.options{display:flex;flex-direction:column;gap:10px;}
+.option{padding:14px 16px;background:#1e293b;border:2px solid transparent;border-radius:12px;cursor:pointer;font-size:14px;transition:all 0.2s;text-align:left;}
+.option:hover{border-color:#22c55e44;}
+.option.selected{border-color:var(--green);background:#22c55e11;}
+.option.correct{border-color:#22c55e;background:#22c55e22;color:#22c55e;}
+.option.wrong{border-color:#ef4444;background:#ef444422;color:#ef4444;}
+.exam-nav{display:flex;justify-content:space-between;align-items:center;margin-top:24px;}
+.timer{font-size:14px;color:var(--muted);}
+.timer span{color:var(--green);font-weight:bold;}
+.result-box{text-align:center;padding:20px;}
+.result-score{font-size:64px;font-weight:900;margin:16px 0;}
+.result-score.pass{color:var(--green);}
+.result-score.fail{color:#ef4444;}
+.cert-display{background:linear-gradient(135deg,#0f172a,#1e293b);border:2px solid var(--green);border-radius:16px;padding:32px;text-align:center;margin:20px 0;}
+.cert-display h3{font-size:22px;color:var(--green);margin-bottom:8px;}
+.cert-display .cert-name{font-size:28px;font-weight:800;margin:12px 0;}
+.cert-display .cert-level{font-size:16px;color:var(--muted);margin-bottom:16px;}
+.cert-display .cert-id{font-size:12px;color:var(--muted);font-family:monospace;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">Nature<span>Core</span> AI</a>
+  <div class="nav-right">
+    <a href="app.html">App</a>
+    <a href="academy.html" class="active">Academy</a>
+    <div id="academyUserMenu"></div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>🎓 Nature Core Academy</h1>
+    <p>Complete lessons, pass exams, earn verified certificates. Climb from Herbalist to Master.</p>
+  </div>
+  <div id="levelsContainer" class="levels-grid">
+    <div style="text-align:center;padding:40px;color:var(--muted);">Loading academy...</div>
+  </div>
+</div>
+
+<!-- Exam Modal -->
+<div class="modal" id="examModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="examTitle">Level 1 Exam</h2>
+      <button class="close-btn" onclick="closeExam()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="progress-bar"><div class="progress-fill" id="examProgress" style="width:0%"></div></div>
+      <div id="examContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Certificate Modal -->
+<div class="modal" id="certModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>🏆 Certificate Earned!</h2>
+      <button class="close-btn" onclick="document.getElementById('certModal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body" id="certContent"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://kwuutumzvdcsmbioqhbh.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3dXV0dW16dmRjc21iaW9xaGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NTAzOTEsImV4cCI6MjA5NTMyNjM5MX0.7_Eatvd75ez4kGv745Fd7bF6pyKMp1LYl-hNPvierbA";
+const API = "https://naturecore-ai.onrender.com";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let userProfile = null;
+let userProgress = [];
+let currentExam = { questions:[], answers:[], levelId:null, current:0 };
+
+const LEVELS = [
+  { id:0, name:"Explorer", desc:"Free access. Browse our plant database and ask 3 AI questions per day.", price:0, type:"free", topics:["Medicinal plants overview","Basic conditions","Plant types","Safety basics"] },
+  { id:1, name:"Herbalist", desc:"Master basic herbal medicine. Learn 50+ plants, their conditions, preparations, and safety.", price:5000, type:"monthly", topics:["50+ African medicinal plants","Common diseases and plant treatments","Preparation methods","Dosage and safety","Traditional vs modern medicine"] },
+  { id:2, name:"Practitioner", desc:"Advanced herbalism. Plant chemistry, formulation, scientific research.", price:15000, type:"monthly", topics:["Plant chemistry and compounds","Herbal formulation science","Reading research papers","Drug interactions","Advanced disease management"] },
+  { id:3, name:"Specialist", desc:"Expert level. Clinical herbalism, pharmacology, and business of natural medicine.", price:50000, type:"one_time", topics:["Clinical herbalism practice","Pharmacology of plant compounds","Business of herbal medicine","NAFDAC compliance","Professional consultation"] },
+  { id:4, name:"Master", desc:"Highest level. Research, teaching, and certification authority.", price:100000, type:"one_time", topics:["Research methodology","Teaching and mentorship","Certification authority","Global herbal systems","Academic publishing"] }
+];
+
+async function init(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(!session){
+    document.getElementById("levelsContainer").innerHTML = `<div style="text-align:center;padding:40px;"><p style="color:var(--muted);margin-bottom:20px;">Sign in to access the Academy and track your progress.</p><a href="auth.html" style="background:var(--green);color:#000;padding:12px 24px;border-radius:10px;font-weight:bold;text-decoration:none;">Sign In to Continue</a></div>`;
+    return;
+  }
+  currentUser = session.user;
+  const { data: profile } = await sb.from("profiles").select("*").eq("id", currentUser.id).single();
+  userProfile = profile;
+  const { data: progress } = await sb.from("user_progress").select("*").eq("user_id", currentUser.id);
+  userProgress = progress || [];
+  renderUserMenu();
+  renderLevels();
+}
+
+function getProgress(levelId){ return userProgress.find(p => p.level_id === levelId); }
+
+function renderLevels(){
+  const userLevel = userProfile?.level || 0;
+  const container = document.getElementById("levelsContainer");
+  container.innerHTML = LEVELS.map(level => {
+    const progress = getProgress(level.id);
+    const isPassed = progress?.status === 'passed';
+    const isWaiting = progress?.status === 'passed' && progress?.waiting_until && new Date(progress.waiting_until) > new Date();
+    const isCurrentLevel = level.id === userLevel;
+    const isLocked = level.id > userLevel + 1;
+    const isFree = level.id === 0;
+
+    let badge = '';
+    if(isFree) badge = '<span class="level-badge badge-free">Free Forever</span>';
+    else if(isPassed && !isWaiting) badge = '<span class="level-badge badge-passed">✅ Completed</span>';
+    else if(isWaiting) badge = '<span class="level-badge badge-waiting">⏳ Waiting Period</span>';
+    else if(isCurrentLevel) badge = '<span class="level-badge" style="background:#22c55e22;color:#22c55e;border:1px solid #22c55e44;">📚 Current Level</span>';
+    else if(isLocked) badge = '<span class="level-badge badge-locked">🔒 Locked</span>';
+    else badge = `<span class="level-badge" style="background:#1e293b;color:var(--text);">${level.type === 'monthly' ? '₦'+level.price.toLocaleString()+'/mo' : '₦'+level.price.toLocaleString()}</span>`;
+
+    let actions = '';
+    if(isFree){
+      actions = `<a href="app.html" class="btn btn-primary">Open App →</a>`;
+    } else if(isPassed){
+      actions = `<span class="cert-badge">🏆 ${progress.certificate_id}</span>`;
+      if(isWaiting){
+        const days = Math.ceil((new Date(progress.waiting_until) - new Date()) / (1000*60*60*24));
+        actions += `<span style="font-size:13px;color:var(--muted);margin-left:12px;">Next level unlocks in ${days} day${days !== 1 ? 's' : ''}</span>`;
+      } else {
+        actions += `<button class="btn btn-primary" onclick="startExam(${level.id + 1})">Start Level ${level.id + 1} →</button>`;
+      }
+    } else if(isCurrentLevel || level.id <= userLevel + 1){
+      if(!progress){
+        actions = `<button class="btn btn-primary" onclick="startExam(${level.id})">Take Exam →</button>`;
+        if(level.price > 0){
+          actions = `<button class="btn btn-primary" onclick="unlockLevel(${level.id})">Unlock — ₦${level.price.toLocaleString()} →</button>`;
+        }
+      } else if(progress.status === 'failed'){
+        actions = `<button class="btn btn-primary" onclick="startExam(${level.id})">Retake Exam →</button><span style="font-size:13px;color:#ef4444;margin-left:12px;">Last score: ${progress.exam_score}%</span>`;
+      }
+    } else {
+      actions = `<button class="btn btn-disabled" disabled>🔒 Complete Level ${level.id - 1} First</button>`;
+    }
+
+    return `
+    <div class="level-card ${isFree ? 'unlocked' : isCurrentLevel ? 'current' : isLocked ? 'locked' : ''}">
+      <div class="level-header">
+        <div class="level-num">Level ${level.id}</div>
+        ${badge}
+      </div>
+      <div class="level-name">${level.name}</div>
+      <div class="level-desc">${level.desc}</div>
+      <div class="topics-list">${level.topics.map(t => `<span class="topic-tag">${t}</span>`).join('')}</div>
+      <div class="level-actions">${actions}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderUserMenu(){
+  const el = document.getElementById("academyUserMenu");
+  if(!currentUser){ el.innerHTML = `<a href="auth.html" style="background:var(--green);color:#000;padding:8px 16px;border-radius:8px;font-weight:bold;font-size:13px;text-decoration:none;">Sign In</a>`; return; }
+  const name = userProfile?.full_name || currentUser.email.split("@")[0];
+  el.innerHTML = `<span style="font-size:13px;color:var(--muted);">👤 ${name} · Level ${userProfile?.level || 0}</span>`;
+}
+
+async function startExam(levelId){
+  document.getElementById("examModal").style.display = "block";
+  document.getElementById("examTitle").textContent = `Level ${levelId} — ${LEVELS[levelId]?.name} Exam`;
+  document.getElementById("examContent").innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">🌿 Generating your exam questions...<br><small style="margin-top:8px;display:block;">This may take 10-15 seconds</small></div>`;
+
+  try {
+    const res = await fetch(`${API}/generate-exam`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ level_id: levelId })
+    });
+    const data = await res.json();
+    currentExam = { questions: data.questions, answers: new Array(data.questions.length).fill(null), levelId, current: 0, showingResult: false };
+    renderQuestion();
+  } catch(e) {
+    document.getElementById("examContent").innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;">❌ Failed to generate exam. Check connection and try again.</div>`;
+  }
+}
+
+function renderQuestion(){
+  const { questions, answers, current } = currentExam;
+  const q = questions[current];
+  const progress = ((current + 1) / questions.length) * 100;
+  document.getElementById("examProgress").style.width = progress + '%';
+
+  document.getElementById("examContent").innerHTML = `
+    <div class="question-num">Question ${current + 1} of ${questions.length}</div>
+    <div class="question-text">${q.question}</div>
+    <div class="options">
+      ${['a','b','c','d'].map(opt => `
+        <button class="option ${answers[current] === opt ? 'selected' : ''}" onclick="selectAnswer('${opt}')">
+          <strong>${opt.toUpperCase()}.</strong> ${q['option_' + opt]}
+        </button>`).join('')}
+    </div>
+    <div class="exam-nav">
+      <span style="font-size:13px;color:var(--muted);">${questions.filter((_,i) => answers[i] !== null).length}/${questions.length} answered</span>
+      ${current < questions.length - 1
+        ? `<button class="btn btn-primary" onclick="nextQuestion()" ${answers[current] === null ? 'disabled style="opacity:0.5"' : ''}>Next →</button>`
+        : `<button class="btn btn-primary" onclick="submitExam()" ${answers[current] === null ? 'disabled style="opacity:0.5"' : ''}>Submit Exam</button>`
+      }
+    </div>`;
+}
+
+function selectAnswer(opt){
+  currentExam.answers[currentExam.current] = opt;
+  renderQuestion();
+}
+
+function nextQuestion(){
+  if(currentExam.current < currentExam.questions.length - 1){
+    currentExam.current++;
+    renderQuestion();
+  }
+}
+
+async function submitExam(){
+  document.getElementById("examContent").innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">⏳ Calculating your results...</div>`;
+  try {
+    const res = await fetch(`${API}/submit-exam`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ user_id: currentUser.id, level_id: currentExam.levelId, answers: currentExam.answers, questions: currentExam.questions })
+    });
+    const data = await res.json();
+    renderResults(data);
+  } catch(e) {
+    document.getElementById("examContent").innerHTML = `<div style="text-align:center;color:#ef4444;">❌ Error submitting exam. Please try again.</div>`;
+  }
+}
+
+function renderResults(data){
+  const { passed, score, results, certId, waitingUntil } = data;
+  const levelName = LEVELS[currentExam.levelId]?.name || '';
+  const wrongAnswers = results.filter(r => !r.passed);
+
+  document.getElementById("examContent").innerHTML = `
+    <div class="result-box">
+      <div style="font-size:20px;">${passed ? '🎉' : '😔'}</div>
+      <div class="result-score ${passed ? 'pass' : 'fail'}">${score}%</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px;">${passed ? 'Congratulations! You Passed!' : 'Not quite there yet'}</div>
+      <div style="color:var(--muted);font-size:14px;margin-bottom:24px;">${passed ? `You've earned the ${levelName} certificate!` : 'You need 70% to pass. Review and try again.'}</div>
+      
+      ${passed && certId ? `
+      <div class="cert-display">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">NATURE CORE AI CERTIFIED</div>
+        <h3>Certificate of Achievement</h3>
+        <div class="cert-name">${userProfile?.full_name || 'Nature Core Student'}</div>
+        <div class="cert-level">Level ${currentExam.levelId} — ${levelName}</div>
+        <div style="color:var(--green);font-size:15px;margin-bottom:12px;">Score: ${score}%</div>
+        <div class="cert-id">ID: ${certId}</div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);">Next level unlocks in 7 days. Keep learning!</p>` : ''}
+      
+      ${wrongAnswers.length > 0 ? `
+      <div style="text-align:left;margin-top:20px;">
+        <div style="font-size:14px;font-weight:bold;margin-bottom:12px;color:var(--text);">Review incorrect answers:</div>
+        ${wrongAnswers.slice(0,3).map(r => `
+          <div style="background:#1e293b;border-radius:10px;padding:12px;margin-bottom:10px;font-size:13px;">
+            <div style="color:white;margin-bottom:6px;">${r.question}</div>
+            <div style="color:#ef4444;">Your answer: ${r.selected?.toUpperCase()}</div>
+            <div style="color:#22c55e;">Correct: ${r.correct?.toUpperCase()}</div>
+            <div style="color:var(--muted);margin-top:4px;">${r.explanation}</div>
+          </div>`).join('')}
+      </div>` : ''}
+      
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:20px;flex-wrap:wrap;">
+        <button onclick="closeExam();init();" class="btn btn-secondary">Close & Refresh</button>
+        ${!passed ? `<button onclick="startExam(${currentExam.levelId})" class="btn btn-primary">Try Again</button>` : ''}
+      </div>
+    </div>`;
+
+  if(passed){ userProgress = userProgress.filter(p => p.level_id !== currentExam.levelId); userProgress.push({level_id:currentExam.levelId,status:'passed',certificate_id:certId,exam_score:score,waiting_until:waitingUntil}); }
+}
+
+function closeExam(){ document.getElementById("examModal").style.display = "none"; }
+
+function unlockLevel(levelId){
+  alert(`Payment for Level ${levelId} coming soon! We are integrating Paystack. Check back shortly.`);
+}
+
+init();
+</script>
+</body>
+</html>
