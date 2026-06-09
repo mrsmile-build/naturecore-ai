@@ -153,6 +153,40 @@ app.post("/ask", async (req, res) => {
   res.json({ answer: data.choices[0].message.content });
 });
 
+
+app.post("/formulate", async (req, res) => {
+  const { goal } = req.body;
+
+  const { data: plants } = await supabase
+    .from("plants")
+    .select("name, scientific_name, benefits, skincare_uses, properties, chemistry, preparation");
+
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${getGroqKey()}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: "llama-3.1-8b-instant",
+      max_tokens: 1500,
+      messages: [
+        {
+          role: "system",
+          content: "You are Nature Core AI Formulation Assistant — an expert cosmetic chemist, herbalist, and natural product formulator. You help create professional herbal formulations for skincare, haircare, soaps, creams, oils, and health products. Always give: 1) Product name and purpose 2) Complete ingredient list with exact percentages 3) Step-by-step manufacturing process 4) Preservation and shelf life 5) Packaging recommendations 6) Estimated cost in Naira 7) Safety warnings. Be specific and professional — like a real cosmetic chemist would write."
+        },
+        {
+          role: "user",
+          content: `Available plants database: ${JSON.stringify(plants)}\n\nFormulation request: ${goal}`
+        }
+      ]
+    })
+  });
+
+  const data = await response.json();
+  res.json({ formula: data.choices[0].message.content });
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🌿 Nature Core AI running on port ${PORT}`);
