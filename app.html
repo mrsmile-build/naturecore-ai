@@ -187,12 +187,6 @@ cursor:pointer;
 }
 </style>
 <script src="https://js.paystack.co/v1/inline.js"></script>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#22c55e">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="NatureCore AI">
-<link rel="apple-touch-icon" href="icon-192.png">
 </head>
 
 <body>
@@ -720,44 +714,5 @@ document.addEventListener("DOMContentLoaded", function(){
   </button>
 </div>
 </div>
-<div id="installBanner" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f172a;border:1px solid #22c55e;border-radius:16px;padding:16px 20px;z-index:999;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);max-width:340px;width:90%;">
-  <span style="font-size:24px;">🌿</span>
-  <div style="flex:1;">
-    <div style="font-weight:bold;font-size:14px;">Install Nature Core AI</div>
-    <div style="color:#64748b;font-size:12px;">Add to home screen for quick access</div>
-  </div>
-  <button onclick="installPWA()" style="background:#22c55e;color:#000;border:none;border-radius:8px;padding:8px 14px;font-weight:bold;cursor:pointer;font-size:13px;">Install</button>
-  <button onclick="dismissInstall()" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:18px;">×</button>
-</div>
-<script>
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("/naturecore-ai/sw.js")
-    .then(()=>console.log("SW registered"))
-    .catch(e=>console.log("SW error",e));
-}
-
-// PWA install prompt
-let deferredPrompt;
-window.addEventListener("beforeinstallprompt", e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  const banner = document.getElementById("installBanner");
-  if(banner) banner.style.display = "flex";
-});
-
-function installPWA(){
-  if(deferredPrompt){
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(()=>{ deferredPrompt = null; });
-    const banner = document.getElementById("installBanner");
-    if(banner) banner.style.display = "none";
-  }
-}
-
-function dismissInstall(){
-  const banner = document.getElementById("installBanner");
-  if(banner) banner.style.display = "none";
-}
-</script>
 </body>
 </html>
