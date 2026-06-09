@@ -530,7 +530,7 @@ function closePaywall(){
   document.getElementById("paywallModal").style.display = "none";
 }
 
-function initiatePayment(){
+async function initiatePayment(){
   const email = prompt("Enter your email address to continue:");
   if(!email || !email.includes("@")) {
     alert("Please enter a valid email address");
@@ -577,7 +577,6 @@ function checkDailyReset(){
 }
 
 checkDailyReset();
-checkPremiumStatus();
 
 function clearChat(){
   chatHistory = [];
