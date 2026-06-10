@@ -571,6 +571,8 @@ function initiatePayment(){
 
 // Reset question count daily
 function checkDailyReset(){
+  // Only used for guest users (not logged in)
+  if(currentUser) return; // Logged in users use Supabase
   const lastDate = localStorage.getItem("ncai_last_date");
   const today = new Date().toDateString();
   if(lastDate !== today){
