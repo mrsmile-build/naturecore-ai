@@ -116,7 +116,7 @@ app.get("/nature", async (req, res) => {
 
 // AI Chat with PubMed citations
 app.post("/ask", async (req, res) => {
-  const { question, history = [], preferred_language = 'english', country = '' } = req.body;
+  const { question, history = [], preferred_language = 'english', country = '', user_level = 0 } = req.body;
   const { data: plants } = await supabase.from("plants").select("name, benefits, conditions, preparation, warnings, chemistry");
 
   // Fetch PubMed studies for the question
@@ -125,7 +125,57 @@ app.post("/ask", async (req, res) => {
     ? `\n\nRELEVANT SCIENTIFIC STUDIES:\n${studies.map((s,i) => `[${i+1}] ${s.title} — ${s.authors} (${s.year}), ${s.journal}`).join('\n')}`
     : '';
 
+  // Level-gated response depth
+  const levelInstructions = {
+    0: `IMPORTANT: You are responding to a FREE user (Level 0 Explorer). 
+Provide BASIC information only:
+- List 2-3 relevant plants/ingredients with simple names
+- One-line benefit for each
+- Very basic preparation (e.g. "boil and drink")
+- End with: "Upgrade to Level 1 for detailed dosages, chemistry, drug interactions, and scientific research."
+DO NOT provide: exact dosages, chemical compounds, drug interactions, scientific studies, advanced formulation.`,
+    
+    1: `You are responding to a LEVEL 1 Herbalist.
+Provide FULL expert answers including:
+- Complete ingredient list with specific reasons
+- Detailed preparation and exact dosages
+- Active compounds and how they work
+- Basic warnings and drug interactions
+- End with: "Upgrade to Level 2 for PubMed research citations and advanced chemistry."
+DO NOT provide: PubMed study citations, advanced pharmacology, business formulation.`,
+    
+    2: `You are responding to a LEVEL 2 Practitioner.
+Provide ADVANCED answers including:
+- Everything in Level 1
+- Reference provided PubMed studies with [1], [2], etc.
+- Chemical compounds and biochemical mechanisms in detail
+- Drug interactions and contraindications
+- Clinical dosage recommendations
+- End with: "Upgrade to Level 3 for clinical analysis and business formulation tools."`,
+    
+    3: `You are responding to a LEVEL 3 Specialist.
+Provide CLINICAL expert answers including:
+- Everything in Level 2
+- Clinical analysis and disease management protocols
+- Business formulation guidance
+- Regulatory considerations (NAFDAC, etc.)
+- Professional consultation framework
+- Research interpretation`,
+    
+    4: `You are responding to a LEVEL 4 Master Herbalist.
+Provide MASTER level answers with:
+- Everything in Level 3
+- Research methodology insights
+- Teaching and mentorship guidance
+- Global herbal medicine systems comparison
+- Advanced research interpretation`
+  };
+
+  const levelGuide = levelInstructions[user_level] || levelInstructions[0];
+
   const systemPrompt = `You are Nature Core AI — the world's most advanced natural medicine intelligence platform. You combine the expertise of a medical doctor, pharmacist, biochemist, botanist, pharmacognosist, and traditional herbalist from every culture.
+  
+${levelGuide}
 
 CRITICAL LANGUAGE RULES:
 1. DEFAULT language is ENGLISH unless the user's preferred language is specified in the request
@@ -165,7 +215,9 @@ RULES:
 - Cover EVERYTHING natural — not just medicinal plants
 - Include vegetables, fruits, spices, minerals, oils in recommendations
 - Give expert-level, specific, actionable answers
-- Never refuse health questions
+- Never refuse health or natural medicine questions
+- For questions outside natural medicine scope, politely explain: 'Nature Core AI specializes in natural medicine, plants, and health. For [topic], please consult [appropriate expert].'
+- NEVER just stay silent — always give a response
 - Reference provided studies with numbers`;
 
   const answer = await callGroq([

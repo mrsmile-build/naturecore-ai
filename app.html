@@ -663,7 +663,8 @@ async function askAI(){
           question,
           history: chatHistory.slice(-6),
           preferred_language: (userProfile?.preferred_language) || localStorage.getItem('ncai_lang') || 'english',
-          country: (userProfile?.country) || ''
+          country: (userProfile?.country) || '',
+          user_level: isPremium ? (userProfile?.level || 1) : 0
         })
       });
       if(!res.ok) throw new Error("Server error");
