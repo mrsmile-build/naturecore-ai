@@ -661,7 +661,9 @@ async function askAI(){
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           question,
-          history: chatHistory.slice(-6)
+          history: chatHistory.slice(-6),
+          preferred_language: (userProfile?.preferred_language) || localStorage.getItem('ncai_lang') || 'english',
+          country: (userProfile?.country) || ''
         })
       });
       if(!res.ok) throw new Error("Server error");
@@ -862,7 +864,23 @@ window.addEventListener("DOMContentLoaded", initAuth);
     <div id="stgUserInfo" style="color:#64748b;font-size:14px;margin-bottom:16px;"></div>
     <label style="font-size:13px;color:#94a3b8;display:block;margin-bottom:6px;">Full Name</label>
     <input id="stgName" style="width:100%;padding:11px;background:#020617;border:1px solid #334155;border-radius:10px;color:white;font-size:14px;outline:none;margin-bottom:12px;">
-    <button onclick="saveProfile()" style="background:#22c55e;color:#000;border:none;border-radius:10px;padding:10px 20px;font-weight:bold;cursor:pointer;font-size:13px;">Save Name</button>
+    <label style="font-size:13px;color:#94a3b8;display:block;margin-bottom:6px;">Country</label>
+    <input id="stgCountry" placeholder="e.g. Nigeria" style="width:100%;padding:11px;background:#020617;border:1px solid #334155;border-radius:10px;color:white;font-size:14px;outline:none;margin-bottom:12px;">
+    <label style="font-size:13px;color:#94a3b8;display:block;margin-bottom:6px;">Preferred Language for AI Responses</label>
+    <select id="stgLang" style="width:100%;padding:11px;background:#020617;border:1px solid #334155;border-radius:10px;color:white;font-size:14px;outline:none;margin-bottom:16px;">
+      <option value="english">English (Default)</option>
+      <option value="yoruba">Yoruba</option>
+      <option value="hausa">Hausa</option>
+      <option value="igbo">Igbo</option>
+      <option value="pidgin">Nigerian Pidgin</option>
+      <option value="french">French</option>
+      <option value="arabic">Arabic</option>
+      <option value="swahili">Swahili</option>
+      <option value="portuguese">Portuguese</option>
+      <option value="spanish">Spanish</option>
+      <option value="hindi">Hindi</option>
+    </select>
+    <button onclick="saveProfile()" style="background:#22c55e;color:#000;border:none;border-radius:10px;padding:10px 20px;font-weight:bold;cursor:pointer;font-size:13px;">Save Profile</button>
     <div id="stgProfileMsg" style="margin-top:8px;font-size:13px;display:none;"></div>
   </div>
   <div style="padding:20px;border-bottom:1px solid #1e293b;">
@@ -902,6 +920,8 @@ function openSettings(){
     document.getElementById("stgUserInfo").textContent = currentUser.email;
     const name = (userProfile && userProfile.full_name) ? userProfile.full_name : "";
     document.getElementById("stgName").value = name;
+    if(document.getElementById("stgCountry")) document.getElementById("stgCountry").value = userProfile?.country || '';
+    if(document.getElementById("stgLang")) document.getElementById("stgLang").value = userProfile?.preferred_language || 'english';
     document.getElementById("stgSubInfo").innerHTML = isPremium
       ? "🌿 <strong style=\'color:#22c55e\'>Level 1 — Herbalist</strong><br><small>Unlimited AI consultations active</small>"
       : "🆓 <strong>Free Explorer</strong><br><small>3 AI questions per day</small>";
@@ -920,9 +940,13 @@ async function saveProfile(){
   const name = document.getElementById("stgName").value.trim();
   const msg = document.getElementById("stgProfileMsg");
   if(!name){ showStgMsg(msg,"Enter your name","error"); return; }
-  const { error } = await sb.auth.updateUser({data:{full_name:name}});
+  const country = document.getElementById("stgCountry")?.value?.trim() || '';
+  const lang = document.getElementById("stgLang")?.value || 'english';
+  const { error } = await sb.auth.updateUser({data:{full_name:name, country, preferred_language:lang}});
   if(!error){
-    await sb.from("profiles").update({full_name:name}).eq("id",currentUser.id);
+    await sb.from("profiles").update({full_name:name, country, preferred_language:lang}).eq("id",currentUser.id);
+    if(userProfile){ userProfile.country = country; userProfile.preferred_language = lang; }
+    localStorage.setItem('ncai_lang', lang);
     if(userProfile) userProfile.full_name = name;
     renderUserMenu();
     showStgMsg(msg,"✅ Name updated!","success");

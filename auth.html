@@ -120,6 +120,26 @@ footer a{color:var(--green);text-decoration:none;}
           <button class="toggle-pw" onclick="togglePw('signupPassword')">👁</button>
         </div>
       </div>
+      <div class="form-group">
+        <label>Country</label>
+        <input type="text" id="signupCountry" placeholder="e.g. Nigeria, Ghana, Kenya...">
+      </div>
+      <div class="form-group">
+        <label>Preferred Language</label>
+        <select id="signupLang" style="width:100%;padding:14px 16px;background:var(--dark);border:1px solid var(--border);border-radius:12px;color:white;font-size:15px;outline:none;">
+          <option value="english">English (Default)</option>
+          <option value="yoruba">Yoruba</option>
+          <option value="hausa">Hausa</option>
+          <option value="igbo">Igbo</option>
+          <option value="pidgin">Nigerian Pidgin</option>
+          <option value="french">French</option>
+          <option value="arabic">Arabic</option>
+          <option value="swahili">Swahili</option>
+          <option value="portuguese">Portuguese</option>
+          <option value="spanish">Spanish</option>
+          <option value="hindi">Hindi</option>
+        </select>
+      </div>
       <div class="terms-check">
         <input type="checkbox" id="termsCheck">
         <label for="termsCheck">I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a> of Nature Core AI</label>
@@ -200,10 +220,21 @@ async function signup(){
   btn.textContent = "Creating account...";
   btn.disabled = true;
   hideAlert();
-  const { error } = await sb.auth.signUp({
+  const country = document.getElementById("signupCountry")?.value?.trim() || '';
+  const lang = document.getElementById("signupLang")?.value || 'english';
+  const { data: signupData, error } = await sb.auth.signUp({
     email, password,
-    options: { data: { full_name: name } }
+    options: { data: { full_name: name, country, preferred_language: lang } }
   });
+  if(!error && signupData?.user){
+    await sb.from("profiles").upsert([{
+      id: signupData.user.id,
+      email,
+      full_name: name,
+      country,
+      preferred_language: lang
+    }]);
+  }
   if(error){
     showAlert(error.message);
     btn.textContent = "Create Free Account";
