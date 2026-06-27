@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>African Wisdom — Nature Core AI</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#22c55e">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--green:#22c55e;--gold:#facc15;--dark:#020617;--card:#0f172a;--border:#1e293b;--text:#cbd5e1;--muted:#64748b;}
+body{font-family:"Segoe UI",Arial,sans-serif;background:var(--dark);color:white;min-height:100vh;}
+nav{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(2,6,23,0.95);z-index:100;}
+.logo{font-size:18px;font-weight:bold;color:var(--green);text-decoration:none;}
+.logo span{color:white;}
+.nav-links{display:flex;gap:16px;align-items:center;}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:14px;}
+.container{max-width:900px;margin:0 auto;padding:30px 20px 80px;}
+.hero{text-align:center;padding:50px 20px;border-bottom:1px solid var(--border);margin-bottom:40px;}
+.hero h1{font-size:clamp(28px,5vw,48px);font-weight:900;margin-bottom:12px;}
+.hero h1 span{color:var(--gold);}
+.hero p{color:var(--muted);font-size:16px;max-width:600px;margin:0 auto;}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px;background:var(--card);padding:6px;border-radius:14px;}
+.tab{padding:10px 16px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;color:var(--muted);border:none;background:none;transition:all 0.2s;}
+.tab.active{background:var(--border);color:white;}
+.section{display:none;}
+.section.active{display:block;}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;}
+.wisdom-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:border-color 0.2s;}
+.wisdom-card:hover{border-color:var(--gold);}
+.wisdom-card .symbol{font-size:40px;margin-bottom:12px;display:block;}
+.wisdom-card h3{font-size:17px;font-weight:700;margin-bottom:6px;}
+.wisdom-card .origin{font-size:12px;color:var(--green);margin-bottom:8px;}
+.wisdom-card p{font-size:14px;color:var(--muted);line-height:1.6;}
+.wisdom-card .meaning{background:#1e293b;border-radius:8px;padding:10px;margin-top:12px;font-size:13px;color:var(--text);line-height:1.6;}
+.detail-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;overflow-y:auto;padding:20px;}
+.detail-box{background:var(--card);border:1px solid var(--gold);border-radius:20px;max-width:600px;margin:20px auto;overflow:hidden;}
+.detail-header{padding:24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.detail-body{padding:24px;}
+.close-btn{background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;}
+.section-title{font-size:13px;color:var(--gold);font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.remedy-card{background:#1e293b;border-radius:12px;padding:16px;margin-bottom:12px;}
+.remedy-card h4{color:var(--green);margin-bottom:6px;font-size:15px;}
+.remedy-card p{color:var(--text);font-size:13px;line-height:1.6;}
+.sign-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
+.sign-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;}
+.sign-card .sign-icon{font-size:36px;margin-bottom:10px;}
+.sign-card h3{font-size:15px;font-weight:700;margin-bottom:6px;}
+.sign-card p{font-size:12px;color:var(--muted);line-height:1.5;}
+.search-bar{padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:white;font-size:15px;outline:none;width:100%;margin-bottom:24px;}
+.search-bar:focus{border-color:var(--green);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">Nature<span>Core</span> AI</a>
+  <div class="nav-links">
+    <a href="app.html">App</a>
+    <a href="academy.html">Academy</a>
+    <a href="wisdom.html" style="color:var(--gold);">Wisdom</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <h1>African <span>Wisdom</span> & Natural Signs</h1>
+    <p>Traditional knowledge passed down through generations — plants, symbols, signs, and their meanings in African culture and medicine.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('plants')">🌿 Sacred Plants</button>
+    <button class="tab" onclick="showTab('signs')">🔮 Signs & Omens</button>
+    <button class="tab" onclick="showTab('symbols')">✨ Symbols</button>
+    <button class="tab" onclick="showTab('remedies')">💊 Grandfather Remedies</button>
+    <button class="tab" onclick="showTab('objects')">🪬 Sacred Objects</button>
+  </div>
+
+  <!-- Sacred Plants -->
+  <div class="section active" id="tab-plants">
+    <input class="search-bar" placeholder="Search sacred plants..." oninput="filterCards(this,'tab-plants')">
+    <div class="cards-grid">
+      <div class="wisdom-card" data-name="Bitter Kola">
+        <span class="symbol">🌰</span>
+        <div class="origin">Yoruba · Igbo · Akan</div>
+        <h3>Bitter Kola (Orogbo)</h3>
+        <p>The sacred nut of truth and longevity. Offered to gods and ancestors in ceremonies.</p>
+        <div class="meaning">💡 Traditional use: Chewed before meetings for clarity of thought. Offered during marriages and chieftaincy rites. Believed to extend life — elders who chew it daily are said to live longer. Modern science confirms it contains kolaviron, a powerful antioxidant.</div>
+      </div>
+      <div class="wisdom-card" data-name="Igi Osun">
+        <span class="symbol">🌳</span>
+        <div class="origin">Yoruba</div>
+        <h3>Igi Osun (Camwood)</h3>
+        <p>The red tree of Osun, goddess of water and fertility. Used in spiritual baths and ceremonies.</p>
+        <div class="meaning">💡 The red powder from camwood is used in naming ceremonies for newborns, applied to brides, and used in healing spiritual wounds. The bark contains tannins and antimicrobial compounds.</div>
+      </div>
+      <div class="wisdom-card" data-name="Uziza">
+        <span class="symbol">🍃</span>
+        <div class="origin">Igbo · Efik</div>
+        <h3>Uziza Leaf</h3>
+        <p>The leaf of fertility and postpartum healing. Essential in Aju Mbaise — the famous Igbo weight loss and fertility herb combination.</p>
+        <div class="meaning">💡 Given to women after childbirth in the Aju Mbaise mixture. Contains piperine (same compound as black pepper) which boosts nutrient absorption and speeds healing. A natural postpartum recovery system.</div>
+      </div>
+      <div class="wisdom-card" data-name="Prekese">
+        <span class="symbol">🫙</span>
+        <div class="origin">Akan · Ghanaian</div>
+        <h3>Prekese (Tetrapleura tetraptera)</h3>
+        <p>The four-sided fruit of healing. Used in soups and as medicine throughout West Africa.</p>
+        <div class="meaning">💡 Each of the 4 wings of this fruit contains different healing compounds. Used for hypertension, diabetes, and postpartum care. Its strong aromatic scent is believed to ward off evil spirits — modern science shows the aromatic compounds are antimicrobial.</div>
+      </div>
+      <div class="wisdom-card" data-name="Uda">
+        <span class="symbol">🫒</span>
+        <div class="origin">Igbo · Hausa</div>
+        <h3>Uda (Negro Pepper)</h3>
+        <p>The spice of protection and purification. Used in food, medicine, and spiritual cleansing.</p>
+        <div class="meaning">💡 Added to soups and herbal preparations. Believed to protect the home from negative energy when placed at doorways. Contains alkaloids with strong antimicrobial and antifungal properties. Used in postpartum care to cleanse the womb.</div>
+      </div>
+      <div class="wisdom-card" data-name="Igi Neem">
+        <span class="symbol">🌲</span>
+        <div class="origin">Pan-African · Indian</div>
+        <h3>Neem (Dogoyaro)</h3>
+        <p>The village pharmacy tree. Every part — leaf, bark, seed, oil — is medicine.</p>
+        <div class="meaning">💡 Called "village pharmacy" because it treats almost everything. Malaria, skin diseases, dental health, pest control. The name Dogoyaro in Hausa means "tall boy" — a respectful name for a powerful tree. Contains over 150 biologically active compounds.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signs & Omens -->
+  <div class="section" id="tab-signs">
+    <div class="sign-grid">
+      <div class="sign-card">
+        <div class="sign-icon">🦅</div>
+        <h3>Eagle Appearing</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Yoruba · Igbo · Hausa</p>
+        <p>An eagle circling your home is seen as a sign of incoming victory, elevation, or a message from ancestors. Pay attention to your direction in life.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">🦉</div>
+        <h3>Owl at Night</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Pan-African</p>
+        <p>An owl calling near your home at night is a warning sign. In many traditions, it signals the presence of spiritual forces or that someone needs prayer.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">🐦</div>
+        <h3>Bird in the House</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Yoruba</p>
+        <p>A bird flying into the house is a message from the spirit world. If it leaves peacefully, good news is coming. If it struggles, cleanse the home.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">🌧️</div>
+        <h3>Rain on a Wedding</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Pan-African</p>
+        <p>Rain during a wedding ceremony is universally seen as a blessing from the ancestors — fertility, abundance, and cleansing of the new union.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">🐜</div>
+        <h3>Ants Moving Indoors</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Igbo</p>
+        <p>When ants suddenly move into a house in large numbers, it signals major change coming — either great blessing or warning to prepare for difficulty.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">⭐</div>
+        <h3>Shooting Star</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Hausa · Fulani</p>
+        <p>A shooting star seen at night is a departing soul or a blessing being sent from heaven. Make a prayer or wish immediately when you see it.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">🐊</div>
+        <h3>Crocodile Dream</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Yoruba · Edo</p>
+        <p>Dreaming of a crocodile indicates powerful enemies or jealousy from those close to you. Time to protect yourself spiritually and be careful of trust.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">🌊</div>
+        <h3>Dream of Deep Water</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Pan-African</p>
+        <p>Dreaming of crossing or falling into deep water signals a major life transition. Deep calm water = prosperity coming. Turbulent water = challenges ahead.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Symbols -->
+  <div class="section" id="tab-symbols">
+    <div class="cards-grid">
+      <div class="wisdom-card">
+        <span class="symbol">⚜️</span>
+        <div class="origin">Akan · Ghana</div>
+        <h3>Adinkra — Gye Nyame</h3>
+        <p>Meaning: "Except for God" — the supreme symbol of the omnipotence and immortality of God.</p>
+        <div class="meaning">💡 The most popular Adinkra symbol. Represents that only God is the one who can create, sustain, and destroy. Used on clothing, architecture, and pottery. A reminder of spiritual humility.</div>
+      </div>
+      <div class="wisdom-card">
+        <span class="symbol">🌀</span>
+        <div class="origin">Akan · Ghana</div>
+        <h3>Adinkra — Sankofa</h3>
+        <p>A bird looking backward. Meaning: "It is not wrong to go back and fetch what you forgot."</p>
+        <div class="meaning">💡 Learn from the past. Reconnect with your roots and wisdom of ancestors. Used as a reminder that traditional knowledge has great value — the foundation of Nature Core AI's mission.</div>
+      </div>
+      <div class="wisdom-card">
+        <span class="symbol">🔯</span>
+        <div class="origin">Yoruba · Nigeria</div>
+        <h3>Odu Ifa — Ogun</h3>
+        <p>The symbol of Ogun — god of iron, war, labor, and roads. Patron of blacksmiths, soldiers, and those who work with metal.</p>
+        <div class="meaning">💡 Represented by iron and palm fronds. Invoked for protection, justice, and strength. Ogun clears obstacles from paths — invoking him at the start of a journey or difficult task. His plant is palm — palm oil has medicinal properties confirmed by science.</div>
+      </div>
+      <div class="wisdom-card">
+        <span class="symbol">🌿</span>
+        <div class="origin">Yoruba · Nigeria</div>
+        <h3>Osun Symbol</h3>
+        <p>Goddess of the river, love, beauty, and fertility. Represented by yellow, gold, and sweet water.</p>
+        <div class="meaning">💡 Osun is associated with healing waters. Her plants include cinnamon, chamomile, and sweet herbs. Offerings include honey and oranges. Invoked for fertility, beauty, and healing — especially for women's health.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grandfather Remedies -->
+  <div class="section" id="tab-remedies">
+    <div style="background:#22c55e11;border:1px solid #22c55e33;border-radius:12px;padding:16px;margin-bottom:24px;">
+      <p style="color:var(--green);font-size:14px;">🌿 <strong>Community Knowledge:</strong> These are traditional remedies passed down through African families. Nature Core AI cross-references them with scientific research to find which ones have scientific backing.</p>
+    </div>
+    <div class="cards-grid">
+      <div class="remedy-card">
+        <h4>🫚 Neem Leaf Tea for Malaria</h4>
+        <p><strong>Traditional use:</strong> Boil fresh neem leaves, drink the bitter tea 3x daily for 7 days at the first sign of malaria symptoms.<br><br><strong>Scientific status:</strong> ✅ Confirmed — azadirachtin in neem shows antimalarial activity against P. falciparum in multiple studies.<br><br><strong>Preparation:</strong> 10 fresh leaves in 2 cups water, boil 15 minutes, strain, drink warm.</p>
+      </div>
+      <div class="remedy-card">
+        <h4>🌿 Aju Mbaise for Postpartum</h4>
+        <p><strong>Traditional use:</strong> Igbo women drink this combination of Uziza, Uda, Nchawu, and Ehuru after childbirth to shrink the womb and lose baby weight.<br><br><strong>Scientific status:</strong> ✅ Partially confirmed — compounds in Uziza (piperine) and Uda have uterotonic and anti-inflammatory effects.<br><br><strong>Preparation:</strong> Boil all herbs together, drink daily for 4-8 weeks postpartum.</p>
+      </div>
+      <div class="remedy-card">
+        <h4>🧅 Raw Onion for Ear Infection</h4>
+        <p><strong>Traditional use:</strong> Warm a sliced onion, place near the ear for 15 minutes to relieve ear pain and infection.<br><br><strong>Scientific status:</strong> ✅ Confirmed — quercetin and allicin in onion have demonstrated antibacterial and anti-inflammatory activity.<br><br><strong>Note:</strong> Relief from heat + antimicrobial action combined.</p>
+      </div>
+      <div class="remedy-card">
+        <h4>🫚 Castor Oil for Joint Pain</h4>
+        <p><strong>Traditional use:</strong> Rub warm castor oil on painful joints and wrap with cloth overnight.<br><br><strong>Scientific status:</strong> ✅ Confirmed — ricinoleic acid in castor oil has significant anti-inflammatory effects comparable to some drugs.<br><br><strong>Modern use:</strong> Still used in pharmaceutical anti-inflammatory preparations.</p>
+      </div>
+      <div class="remedy-card">
+        <h4>🌶️ Pepper Soup for Cold & Flu</h4>
+        <p><strong>Traditional use:</strong> Nigerian pepper soup with Uziza, Uda, Ehuru, and fresh pepper treats cold, flu, and respiratory infections.<br><br><strong>Scientific status:</strong> ✅ Confirmed — capsaicin clears congestion, piperine is antiviral, combined herbs have broad antimicrobial action.<br><br><strong>The science:</strong> Traditional pepper soup is actually a scientifically effective respiratory treatment.</p>
+      </div>
+      <div class="remedy-card">
+        <h4>🍯 Honey & Ginger for Cough</h4>
+        <p><strong>Traditional use:</strong> Mix fresh ginger juice with raw honey, take 1 teaspoon every 3 hours for cough and sore throat.<br><br><strong>Scientific status:</strong> ✅ Strongly confirmed — gingerol is anti-inflammatory, honey is antimicrobial and coats the throat. WHO recognizes honey as a cough treatment.<br><br><strong>Better than:</strong> Most commercial cough syrups.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sacred Objects -->
+  <div class="section" id="tab-objects">
+    <div class="sign-grid">
+      <div class="sign-card">
+        <div class="sign-icon">🪬</div>
+        <h3>Cowrie Shell</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Pan-African</p>
+        <p>Symbol of wealth, fertility, and protection. Used in divination (Ifa), jewelry, and spiritual protection. Represents the ocean goddess Yemoja.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">🪵</div>
+        <h3>Opa Osun (Staff)</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Yoruba</p>
+        <p>A beaded staff associated with Osun. Represents authority, healing, and feminine power. Kept in healing shrines.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">🥁</div>
+        <h3>Talking Drum (Dundun)</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Yoruba · West African</p>
+        <p>Not just music — the talking drum communicates messages across distances and is used in healing ceremonies to call spirits and ancestors.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">🧿</div>
+        <h3>Evil Eye Protection</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">North African · Hausa</p>
+        <p>Blue beads and specific herbs worn for protection from jealousy and negative energy. Plants like black seed and rue are used for spiritual protection.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">🏺</div>
+        <h3>Calabash</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Pan-African</p>
+        <p>The calabash represents the womb of the universe in many traditions. Used to carry sacred water, mix herbal preparations, and as offerings.</p>
+      </div>
+      <div class="sign-card">
+        <div class="sign-icon">🔥</div>
+        <h3>Sacred Fire</h3>
+        <p style="color:var(--gold);font-size:11px;margin-bottom:6px;">Pan-African</p>
+        <p>Fire is used for purification, communication with ancestors, and burning of offerings. Camphor and specific plant woods are burned for spiritual purposes.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+function filterCards(input, sectionId){
+  const query = input.value.toLowerCase();
+  document.querySelectorAll('#'+sectionId+' .wisdom-card, #'+sectionId+' .remedy-card').forEach(card=>{
+    const text = card.textContent.toLowerCase();
+    card.style.display = text.includes(query) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

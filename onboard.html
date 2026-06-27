@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get Started — Nature Core AI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#22c55e">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--green:#22c55e;--dark:#020617;--card:#0f172a;--border:#1e293b;--text:#cbd5e1;--muted:#64748b;}
+body{font-family:"Segoe UI",Arial,sans-serif;background:var(--dark);color:white;min-height:100vh;display:flex;flex-direction:column;}
+nav{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);}
+.logo{font-size:18px;font-weight:bold;color:var(--green);text-decoration:none;}
+.logo span{color:white;}
+.container{flex:1;max-width:600px;margin:0 auto;padding:40px 20px;}
+.progress{display:flex;gap:8px;margin-bottom:40px;}
+.progress-step{flex:1;height:4px;background:var(--border);border-radius:4px;transition:background 0.3s;}
+.progress-step.active{background:var(--green);}
+.step{display:none;}
+.step.active{display:block;}
+.step-num{font-size:12px;color:var(--green);font-weight:bold;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.step h2{font-size:26px;font-weight:800;margin-bottom:8px;line-height:1.3;}
+.step p{color:var(--muted);font-size:15px;margin-bottom:32px;line-height:1.6;}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:32px;}
+.option-card{background:var(--card);border:2px solid var(--border);border-radius:16px;padding:20px;cursor:pointer;transition:all 0.2s;text-align:left;}
+.option-card:hover{border-color:#22c55e44;}
+.option-card.selected{border-color:var(--green);background:#22c55e11;}
+.option-card .icon{font-size:28px;margin-bottom:10px;display:block;}
+.option-card h3{font-size:15px;font-weight:700;margin-bottom:4px;}
+.option-card p{font-size:13px;color:var(--muted);margin-bottom:0;}
+.text-input{width:100%;padding:16px;background:var(--card);border:2px solid var(--border);border-radius:14px;color:white;font-size:16px;outline:none;margin-bottom:16px;transition:border-color 0.2s;}
+.text-input:focus{border-color:var(--green);}
+.btn-next{width:100%;padding:16px;background:var(--green);color:#000;border:none;border-radius:14px;font-size:17px;font-weight:700;cursor:pointer;transition:opacity 0.2s;}
+.btn-next:hover{opacity:0.9;}
+.btn-next:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-back{background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;margin-top:16px;display:block;text-align:center;width:100%;}
+.btn-back:hover{color:white;}
+.plan-preview{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px;}
+.plan-preview h3{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--green);}
+.plan-item{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
+.plan-time{font-size:12px;color:var(--green);font-weight:bold;min-width:80px;margin-top:2px;}
+.plan-action{font-size:14px;color:var(--text);line-height:1.5;}
+.summary-card{background:var(--card);border:1px solid #22c55e33;border-radius:16px;padding:20px;margin-bottom:16px;}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.summary-row:last-child{border-bottom:none;}
+.summary-label{font-size:13px;color:var(--muted);}
+.summary-value{font-size:13px;color:white;font-weight:600;}
+@media(max-width:500px){.options-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">Nature<span>Core</span> AI</a>
+  <span style="font-size:13px;color:var(--muted);">Personalize your experience</span>
+</nav>
+
+<div class="container">
+  <div class="progress" id="progressBar"></div>
+
+  <!-- Step 1: Main Goal -->
+  <div class="step active" id="step1">
+    <div class="step-num">Step 1 of 6</div>
+    <h2>What is your main goal?</h2>
+    <p>We'll build your personalized wellness plan around this.</p>
+    <div class="options-grid">
+      <div class="option-card" onclick="select(this,'goal','skin')">
+        <span class="icon">✨</span>
+        <h3>Skin & Beauty</h3>
+        <p>Clear skin, glow, hair growth, anti-aging</p>
+      </div>
+      <div class="option-card" onclick="select(this,'goal','health')">
+        <span class="icon">💪</span>
+        <h3>Health & Healing</h3>
+        <p>Treat conditions, boost immunity, energy</p>
+      </div>
+      <div class="option-card" onclick="select(this,'goal','weight')">
+        <span class="icon">⚖️</span>
+        <h3>Weight Management</h3>
+        <p>Lose weight, detox, metabolism boost</p>
+      </div>
+      <div class="option-card" onclick="select(this,'goal','mental')">
+        <span class="icon">🧘</span>
+        <h3>Mental Wellness</h3>
+        <p>Stress, sleep, anxiety, focus, meditation</p>
+      </div>
+      <div class="option-card" onclick="select(this,'goal','business')">
+        <span class="icon">🏭</span>
+        <h3>Herbal Business</h3>
+        <p>Formulations, products, skincare brand</p>
+      </div>
+      <div class="option-card" onclick="select(this,'goal','research')">
+        <span class="icon">🔬</span>
+        <h3>Research & Learning</h3>
+        <p>Study herbs, science, traditional medicine</p>
+      </div>
+    </div>
+    <button class="btn-next" id="next1" onclick="nextStep(2)" disabled>Continue →</button>
+  </div>
+
+  <!-- Step 2: Specific condition -->
+  <div class="step" id="step2">
+    <div class="step-num">Step 2 of 6</div>
+    <h2>Any specific condition or concern?</h2>
+    <p>Type it in any language — Yoruba, Hausa, Igbo, English, anything.</p>
+    <input type="text" class="text-input" id="conditionInput" placeholder="e.g. Diabetes, Acne, Jedijedi, Iba, Back pain..." oninput="checkCondition()">
+    <div class="options-grid" style="margin-top:0;">
+      <div class="option-card" onclick="setCondition('None — General wellness')">
+        <span class="icon">🌿</span>
+        <h3>None</h3>
+        <p>General wellness plan</p>
+      </div>
+      <div class="option-card" onclick="setCondition('Diabetes')">
+        <span class="icon">🩸</span>
+        <h3>Diabetes</h3>
+        <p>Blood sugar management</p>
+      </div>
+      <div class="option-card" onclick="setCondition('High Blood Pressure')">
+        <span class="icon">❤️</span>
+        <h3>Blood Pressure</h3>
+        <p>Hypertension management</p>
+      </div>
+      <div class="option-card" onclick="setCondition('Acne & Skin Issues')">
+        <span class="icon">🫧</span>
+        <h3>Acne & Skin</h3>
+        <p>Clear skin treatment</p>
+      </div>
+    </div>
+    <button class="btn-next" id="next2" onclick="nextStep(3)">Continue →</button>
+    <button class="btn-back" onclick="nextStep(1)">← Back</button>
+  </div>
+
+  <!-- Step 3: Approach -->
+  <div class="step" id="step3">
+    <div class="step-num">Step 3 of 6</div>
+    <h2>What approach do you prefer?</h2>
+    <p>Choose what you want included in your daily plan.</p>
+    <div class="options-grid">
+      <div class="option-card" onclick="select(this,'approach','herbs')">
+        <span class="icon">🌿</span>
+        <h3>Herbs Only</h3>
+        <p>Teas, plants, natural remedies</p>
+      </div>
+      <div class="option-card" onclick="select(this,'approach','full')">
+        <span class="icon">⚡</span>
+        <h3>Full Holistic</h3>
+        <p>Herbs + exercise + meditation + massage</p>
+      </div>
+      <div class="option-card" onclick="select(this,'approach','spiritual')">
+        <span class="icon">🕯️</span>
+        <h3>Traditional African</h3>
+        <p>Herbs + African wisdom + spiritual wellness</p>
+      </div>
+      <div class="option-card" onclick="select(this,'approach','fitness')">
+        <span class="icon">🏃</span>
+        <h3>Fitness + Herbs</h3>
+        <p>Exercise plans with herbal support</p>
+      </div>
+    </div>
+    <button class="btn-next" id="next3" onclick="nextStep(4)" disabled>Continue →</button>
+    <button class="btn-back" onclick="nextStep(2)">← Back</button>
+  </div>
+
+  <!-- Step 4: Time available -->
+  <div class="step" id="step4">
+    <div class="step-num">Step 4 of 6</div>
+    <h2>How much time can you give daily?</h2>
+    <p>We'll design your plan to fit your lifestyle.</p>
+    <div class="options-grid">
+      <div class="option-card" onclick="select(this,'time','10min')">
+        <span class="icon">⏱️</span>
+        <h3>10 Minutes</h3>
+        <p>Quick daily routine — busy schedule</p>
+      </div>
+      <div class="option-card" onclick="select(this,'time','30min')">
+        <span class="icon">🕐</span>
+        <h3>30 Minutes</h3>
+        <p>Balanced routine — most popular</p>
+      </div>
+      <div class="option-card" onclick="select(this,'time','1hour')">
+        <span class="icon">🕑</span>
+        <h3>1 Hour</h3>
+        <p>Comprehensive wellness routine</p>
+      </div>
+      <div class="option-card" onclick="select(this,'time','flexible')">
+        <span class="icon">🌅</span>
+        <h3>Flexible</h3>
+        <p>No time limit — full program</p>
+      </div>
+    </div>
+    <button class="btn-next" id="next4" onclick="nextStep(5)" disabled>Continue →</button>
+    <button class="btn-back" onclick="nextStep(3)">← Back</button>
+  </div>
+
+  <!-- Step 5: Experience level -->
+  <div class="step" id="step5">
+    <div class="step-num">Step 5 of 6</div>
+    <h2>Your experience with natural medicine?</h2>
+    <p>This helps us explain things at the right level for you.</p>
+    <div class="options-grid">
+      <div class="option-card" onclick="select(this,'experience','beginner')">
+        <span class="icon">🌱</span>
+        <h3>Beginner</h3>
+        <p>Just starting — explain everything simply</p>
+      </div>
+      <div class="option-card" onclick="select(this,'experience','intermediate')">
+        <span class="icon">🌿</span>
+        <h3>Intermediate</h3>
+        <p>I know some herbs and remedies</p>
+      </div>
+      <div class="option-card" onclick="select(this,'experience','advanced')">
+        <span class="icon">🌳</span>
+        <h3>Advanced</h3>
+        <p>Herbalist or health professional</p>
+      </div>
+      <div class="option-card" onclick="select(this,'experience','business')">
+        <span class="icon">🏭</span>
+        <h3>Business Owner</h3>
+        <p>I make or sell herbal products</p>
+      </div>
+    </div>
+    <button class="btn-next" id="next5" onclick="nextStep(6)" disabled>Continue →</button>
+    <button class="btn-back" onclick="nextStep(4)">← Back</button>
+  </div>
+
+  <!-- Step 6: Summary + Plan Preview -->
+  <div class="step" id="step6">
+    <div class="step-num">Step 6 of 6</div>
+    <h2>Your personalized plan is ready! 🌿</h2>
+    <p>Here's what we've built for you based on your answers.</p>
+    <div class="summary-card" id="summaryCard"></div>
+    <div class="plan-preview" id="planPreview">
+      <h3>📅 Your Daily Wellness Plan</h3>
+      <div id="planItems"></div>
+    </div>
+    <button class="btn-next" onclick="saveAndGo()">Start My Journey →</button>
+    <button class="btn-back" onclick="nextStep(5)">← Back</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://kwuutumzvdcsmbioqhbh.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt3dXV0dW16dmRjc21iaW9xaGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NTAzOTEsImV4cCI6MjA5NTMyNjM5MX0.7_Eatvd75ez4kGv745Fd7bF6pyKMp1LYl-hNPvierbA";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const answers = { goal:'', condition:'', approach:'', time:'', experience:'' };
+const totalSteps = 6;
+let currentStep = 1;
+
+function updateProgress(){
+  const bar = document.getElementById('progressBar');
+  bar.innerHTML = Array.from({length:totalSteps}, (_,i) =>
+    `<div class="progress-step ${i < currentStep ? 'active' : ''}"></div>`
+  ).join('');
+}
+
+function nextStep(step){
+  document.getElementById('step'+currentStep).classList.remove('active');
+  currentStep = step;
+  document.getElementById('step'+currentStep).classList.add('active');
+  updateProgress();
+  if(step === 6) buildPlanPreview();
+  window.scrollTo(0,0);
+}
+
+function select(el, field, value){
+  el.closest('.options-grid').querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  answers[field] = value;
+  const nextBtn = document.getElementById('next' + currentStep);
+  if(nextBtn) nextBtn.disabled = false;
+}
+
+function setCondition(val){
+  document.getElementById('conditionInput').value = val;
+  answers.condition = val;
+}
+
+function checkCondition(){
+  answers.condition = document.getElementById('conditionInput').value;
+}
+
+function buildPlanPreview(){
+  const { goal, condition, approach, time, experience } = answers;
+  if(!answers.condition) answers.condition = document.getElementById('conditionInput').value || 'General wellness';
+
+  // Build summary
+  const labels = {
+    goal: {skin:'Skin & Beauty', health:'Health & Healing', weight:'Weight Management', mental:'Mental Wellness', business:'Herbal Business', research:'Research & Learning'},
+    approach: {herbs:'Herbs Only', full:'Full Holistic', spiritual:'Traditional African', fitness:'Fitness + Herbs'},
+    time: {'10min':'10 Minutes', '30min':'30 Minutes', '1hour':'1 Hour', flexible:'Flexible'},
+    experience: {beginner:'Beginner', intermediate:'Intermediate', advanced:'Advanced', business:'Business Owner'}
+  };
+
+  document.getElementById('summaryCard').innerHTML = `
+    <div class="summary-row"><span class="summary-label">Main Goal</span><span class="summary-value">${labels.goal[goal] || goal}</span></div>
+    <div class="summary-row"><span class="summary-label">Condition</span><span class="summary-value">${answers.condition || 'General wellness'}</span></div>
+    <div class="summary-row"><span class="summary-label">Approach</span><span class="summary-value">${labels.approach[approach] || approach}</span></div>
+    <div class="summary-row"><span class="summary-label">Daily Time</span><span class="summary-value">${labels.time[time] || time}</span></div>
+    <div class="summary-row"><span class="summary-label">Experience</span><span class="summary-value">${labels.experience[experience] || experience}</span></div>
+  `;
+
+  // Generate plan based on answers
+  const plans = generatePlan(goal, condition, approach, time);
+  document.getElementById('planItems').innerHTML = plans.map(p => `
+    <div class="plan-item">
+      <span class="plan-time">${p.time}</span>
+      <span class="plan-action">${p.action}</span>
+    </div>`).join('');
+}
+
+function generatePlan(goal, condition, approach, time){
+  const isHerbs = approach === 'herbs' || approach === 'full' || approach === 'spiritual';
+  const isFitness = approach === 'full' || approach === 'fitness';
+  const isMeditation = approach === 'full' || approach === 'spiritual' || approach === 'mental';
+  const isShort = time === '10min';
+
+  const plans = {
+    skin: [
+      {time:'🌅 Morning', action:'Drink 1 cup of warm water with fresh lemon and 1 tsp Moringa powder. Boosts collagen and detoxes skin.'},
+      {time:'☀️ Day', action:'Apply fresh Aloe Vera gel to face for 20 minutes. Reduces inflammation and clears acne.'},
+      ...(isFitness && !isShort ? [{time:'🏃 Exercise', action:'20 minute walk or light stretching — increases blood flow to skin for natural glow.'}] : []),
+      {time:'🌙 Evening', action:'Drink Hibiscus (Zobo) tea — rich in Vitamin C and antioxidants that repair skin overnight.'},
+      ...(isMeditation && !isShort ? [{time:'🧘 Night', action:'5 minute deep breathing meditation. Reduces cortisol which causes skin breakouts.'}] : []),
+    ],
+    health: [
+      {time:'🌅 Morning', action:'Take Bitter Leaf or Moringa tea before food. Activates immune system and regulates blood sugar.'},
+      {time:'💊 With meal', action:'Add Turmeric and Black Pepper to food — curcumin is 20x more effective with piperine.'},
+      ...(isFitness && !isShort ? [{time:'🏃 Exercise', action:'30 minute walk. Movement is medicine — improves circulation and reduces inflammation.'}] : []),
+      {time:'🌙 Evening', action:'Drink Ginger and Garlic tea. Powerful anti-inflammatory and immune booster combination.'},
+    ],
+    weight: [
+      {time:'🌅 Morning', action:'Drink warm water with lemon and 1 tsp Apple Cider Vinegar or Tamarind — boosts metabolism.'},
+      {time:'🌿 Before meals', action:'Drink bitter leaf tea — reduces appetite and slows sugar absorption.'},
+      ...(isFitness ? [{time:'🏃 Exercise', action:isShort ? '10 minute fast walk or jumping jacks.' : '30-45 minute walk, cycling, or home workout.'}] : []),
+      {time:'🌙 Evening', action:'Fenugreek tea — reduces fat absorption and helps sleep quality for weight regulation.'},
+    ],
+    mental: [
+      {time:'🌅 Morning', action:'Ashwagandha and Moringa tea — reduces cortisol (stress hormone) and sharpens focus.'},
+      ...(isMeditation ? [{time:'🧘 Morning', action:isShort ? '5 minute meditation — breathe in for 4, hold 4, out for 4.' : '15 minute guided meditation or deep breathing. Rewires stress response.'}] : []),
+      {time:'☀️ Day', action:'Lemon Balm or Passionflower tea — natural anxiety relief without drowsiness.'},
+      {time:'🌙 Night', action:'Valerian root or Kava tea — natural sleep aid. Fixes sleep = fixes mood, focus, and energy.'},
+    ],
+    business: [
+      {time:'📚 Morning', action:'Study one plant deeply — read its chemistry, benefits, and research on Nature Core AI.'},
+      {time:'🧪 Practice', action:'Formulate one product prototype. Use the Formulation Assistant for exact measurements.'},
+      {time:'📊 Research', action:'Search PubMed for studies on your key ingredients — use Nature Core Academy for research access.'},
+      {time:'🌙 Evening', action:'Document your formulas and test results — build your proprietary recipe database.'},
+    ],
+    research: [
+      {time:'📚 Morning', action:'Read one scientific study about a specific plant. Use Nature Core AI to explain complex terms.'},
+      {time:'🔬 Practice', action:'Cross-reference traditional knowledge with modern science on Nature Core AI.'},
+      {time:'🌿 Hands-on', action:'Prepare one herbal remedy and observe its effects — document everything.'},
+      {time:'📝 Evening', action:'Write notes on what you learned. Teaching others is the fastest way to master knowledge.'},
+    ]
+  };
+
+  return plans[goal] || plans.health;
+}
+
+async function saveAndGo(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(session){
+    const profile = {
+      wellness_goal: answers.goal,
+      condition: answers.condition,
+      wellness_approach: answers.approach,
+      daily_time: answers.time,
+      experience_level: answers.experience,
+      onboarded: true
+    };
+    await sb.from('profiles').update(profile).eq('id', session.user.id);
+  }
+
+  // Save to localStorage for non-logged users too
+  localStorage.setItem('ncai_onboard', JSON.stringify(answers));
+  localStorage.setItem('ncai_onboarded', 'true');
+
+  window.location.href = 'app.html';
+}
+
+updateProgress();
+</script>
+</body>
+</html>
