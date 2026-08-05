@@ -483,7 +483,7 @@ setTimeout(fetchPlants, 3000);
 
 let chatHistory = [];
 let questionCount = parseInt(localStorage.getItem("ncai_questions") || "0");
-let isPremium = localStorage.getItem("ncai_premium") === "true";
+let isPremium = false; // Always verify from Supabase, not localStorage
 const FREE_LIMIT = 3;
 const PAYSTACK_KEY = "pk_test_9c292300d5642c1a160a82de56e2a4ad93bf941a";
 
@@ -962,6 +962,51 @@ function showStgMsg(el, text, type){
   el.style.display = "block";
   setTimeout(()=>{ el.style.display="none"; }, 3000);
 }
+
+async function getFormulation(){
+  const input = document.getElementById("formulaInput");
+  const result = document.getElementById("formulaResult");
+  const btn = document.getElementById("formulaBtn");
+  const goal = input ? input.value.trim() : "";
+  if(!goal){ 
+    if(result) result.innerHTML = "<span style='color:#facc15'>Please enter what you want to create</span>";
+    return; 
+  }
+  if(btn){ btn.textContent = "⏳"; btn.disabled = true; }
+  if(result) result.innerHTML = "<span style='color:#22c55e'>🧪 Creating your formulation...</span>";
+  
+  let attempts = 0;
+  async function tryFormulate(){
+    attempts++;
+    try{
+      const res = await fetch("https://naturecore-ai.onrender.com/formulate",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({goal})
+      });
+      if(!res.ok) throw new Error("Server error " + res.status);
+      const data = await res.json();
+      if(result) result.innerHTML = "🧪 " + (data.formula || "No formula returned")
+        .replace(/\*\*(.*?)\*\*/g,"<strong style='color:#22c55e'>$1</strong>")
+        .replace(/\n/g,"<br>");
+    }catch(e){
+      if(attempts < 3){
+        if(result) result.innerHTML = "<span style='color:#facc15'>⏳ Retrying... " + attempts + "/3</span>";
+        setTimeout(tryFormulate, 4000);
+        return;
+      }
+      if(result) result.innerHTML = "<span style='color:#ef4444'>❌ " + e.message + ". Try again.</span>";
+    }
+    if(btn){ btn.textContent = "Create"; btn.disabled = false; }
+  }
+  tryFormulate();
+}
+
+function setFormGoal(btn){
+  const input = document.getElementById("formulaInput");
+  if(input) input.value = btn.getAttribute("data-goal") || btn.textContent;
+}
+
 </script>
 
 </body>
