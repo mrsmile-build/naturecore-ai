@@ -7,7 +7,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Groq key rotation
 const GROQ_KEYS = [
   process.env.GROQ_KEY_1,
   process.env.GROQ_KEY_2,
@@ -16,7 +15,21 @@ const GROQ_KEYS = [
 let keyIndex = 0;
 function getGroqKey(){ const k = GROQ_KEYS[keyIndex % GROQ_KEYS.length]; keyIndex++; return k; }
 
-// ============ HELPER FUNCTIONS ============
+async function callGroq(messages, maxTokens = 1000) {
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${getGroqKey()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'llama-3.1-8b-instant', max_tokens: maxTokens, messages })
+    });
+    const data = await response.json();
+    if(data.error) throw new Error(data.error.message);
+    return data.choices?.[0]?.message?.content || '';
+  } catch(e) {
+    console.log('Groq error:', e.message);
+    return '';
+  }
+}
 
 async function fetchPubMed(query, maxResults = 3) {
   try {
@@ -27,7 +40,6 @@ async function fetchPubMed(query, maxResults = 3) {
     const searchData = await searchRes.json();
     const ids = searchData.esearchresult?.idlist || [];
     if (!ids.length) return [];
-
     const summaryRes = await fetch(
       `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json${apiKey}`
     );
@@ -35,33 +47,15 @@ async function fetchPubMed(query, maxResults = 3) {
     return ids.map(id => ({
       id,
       title: summaryData.result[id]?.title || '',
-      authors: summaryData.result[id]?.authors?.map(a => a.name).slice(0,3).join(', ') || '',
+      authors: (summaryData.result[id]?.authors || []).slice(0,2).map(a => a.name).join(', '),
       journal: summaryData.result[id]?.fulljournalname || '',
-      year: summaryData.result[id]?.pubdate?.split(' ')[0] || '',
+      year: (summaryData.result[id]?.pubdate || '').split(' ')[0],
       url: `https://pubmed.ncbi.nlm.nih.gov/${id}/`
     })).filter(p => p.title);
-  } catch(e) { return []; }
-}
-
-async function fetchNCBICompounds(plantName) {
-  try {
-    const apiKey = process.env.NCBI_KEY ? `&api_key=${process.env.NCBI_KEY}` : '';
-    const res = await fetch(
-      `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pccompound&term=${encodeURIComponent(plantName)}&retmax=3&retmode=json${apiKey}`
-    );
-    const data = await res.json();
-    return data.esearchresult?.idlist || [];
-  } catch(e) { return []; }
-}
-
-async function fetchPubChem(compoundName) {
-  try {
-    const res = await fetch(
-      `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(compoundName)}/property/MolecularFormula,MolecularWeight,IUPACName/JSON`
-    );
-    const data = await res.json();
-    return data.PropertyTable?.Properties?.[0] || null;
-  } catch(e) { return null; }
+  } catch(e) {
+    console.log('PubMed error:', e.message);
+    return [];
+  }
 }
 
 async function fetchWikipedia(plantName) {
@@ -72,313 +66,209 @@ async function fetchWikipedia(plantName) {
   } catch(e) { return null; }
 }
 
-async function callGroq(messages, maxTokens = 1500) {
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${getGroqKey()}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'llama-3.1-8b-instant', max_tokens: maxTokens, messages })
-  });
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || '';
-}
-
-// ============ ROUTES ============
-
-app.get("/", (req, res) => res.json({ status: "Nature Core AI API Running", version: "2.0" }));
-
-// Search plants with smart lookup
-app.get("/nature", async (req, res) => {
-  const search = req.query.search || "";
-  let query = supabase.from("plants").select("*");
-  if(search){
-    query = query.or(`name.ilike.%${search}%,conditions.cs.{${search}},benefits.cs.{${search}}`);
-  }
-  const { data, error } = await query;
-  if(error) return res.status(500).json({ error: error.message });
-
-  if((!data || data.length === 0) && search){
-    try {
-      const [wiki, pubmed] = await Promise.all([fetchWikipedia(search), fetchPubMed(search + ' medicinal plant', 2)]);
-      if(wiki || pubmed.length > 0){
-        const context = [wiki ? `Wikipedia: ${wiki}` : '', pubmed.length ? `Research: ${pubmed.map(p=>p.title).join('. ')}` : ''].filter(Boolean).join('\n\n');
-        const plantJson = await callGroq([{
-          role: 'user',
-          content: `Based on this data about ${search}:\n${context}\n\nReturn ONLY valid JSON: {name, scientific_name, type, category, origin, properties(array 3), benefits(array 3), conditions(array 3), skincare_uses(array 2), preparation(array 2), warnings(array 1), chemistry({compounds:[2], class:string}), level("free")}. Pure JSON only.`
-        }], 600);
-        const parsed = JSON.parse(plantJson.replace(/```json|```/g,'').trim());
-        await supabase.from('plants').insert([parsed]);
-        return res.json([parsed]);
-      }
-    } catch(e) { console.log('Smart lookup failed:', e.message); }
-  }
-  res.json(data || []);
+app.get("/", (req, res) => {
+  res.json({ status: "Nature Core AI API Running", version: "2.0" });
 });
 
-// AI Chat with PubMed citations
+app.get("/nature", async (req, res) => {
+  try {
+    const search = req.query.search || "";
+    let query = supabase.from("plants").select("*");
+    if(search){
+      query = query.or(`name.ilike.%${search}%,conditions.cs.{${search}},benefits.cs.{${search}}`);
+    }
+    const { data, error } = await query;
+    if(error) return res.status(500).json({ error: error.message });
+
+    if((!data || data.length === 0) && search){
+      try {
+        const wiki = await fetchWikipedia(search);
+        if(wiki){
+          const plantJson = await callGroq([{
+            role: 'user',
+            content: `Based on: ${wiki}\n\nReturn ONLY valid JSON for plant "${search}": {name, scientific_name, type, category, origin, properties(array 3), benefits(array 3), conditions(array 3), skincare_uses(array 2), preparation(array 2), warnings(array 1), chemistry({compounds:[2 strings],class:string}), level("free")}. Pure JSON only.`
+          }], 600);
+          const parsed = JSON.parse(plantJson.replace(/```json|```/g,'').trim());
+          await supabase.from('plants').insert([parsed]);
+          return res.json([parsed]);
+        }
+      } catch(e) { console.log('Smart lookup failed:', e.message); }
+    }
+    res.json(data || []);
+  } catch(e) {
+    console.log('Error in /nature:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.post("/ask", async (req, res) => {
-  const { question, history = [], preferred_language = 'english', country = '', user_level = 0 } = req.body;
-  const { data: plants } = await supabase.from("plants").select("name, benefits, conditions, preparation, warnings, chemistry");
+  try {
+    const { question, history = [], preferred_language = 'english', user_level = 0 } = req.body;
 
-  // Fetch PubMed studies for the question
-  const studies = await fetchPubMed(question + ' medicinal plant herbal', 3);
-  const studiesContext = studies.length > 0
-    ? `\n\nRELEVANT SCIENTIFIC STUDIES:\n${studies.map((s,i) => `[${i+1}] ${s.title} — ${s.authors} (${s.year}), ${s.journal}`).join('\n')}`
-    : '';
+    const { data: plants } = await supabase
+      .from("plants")
+      .select("name, benefits, conditions, preparation, warnings")
+      .limit(20);
 
-  // Level-gated response depth
-  // GLOBAL RULE injected into all levels
-  const GLOBAL_RULES = `
-CRITICAL OUTPUT RULES:
-- NEVER give links, URLs, or tell users to "check PubChem", "visit website", "see database" etc.
-- ALWAYS give the actual information directly in your response
-- If you mention a study, write the finding directly - do not link to it
-- If you mention a compound, explain it directly - do not refer elsewhere
-- Your response IS the complete answer - users cannot follow links
-- If something is outside your scope or the user's level, say exactly: 
-  "This information is available at [Level X - LevelName]. Upgrade to access this."
-- Never be vague - either answer fully (within level limits) or explain exactly what level unlocks it
-`;
+    const studies = await fetchPubMed(question + ' medicinal plant herbal', 3);
 
-  const levelInstructions = {
-    0: `IMPORTANT: You are responding to a FREE user (Level 0 Explorer). 
-Provide BASIC information only:
-- List 2-3 relevant plants/ingredients with simple names
-- One-line benefit for each  
-- Very basic preparation (e.g. "boil and drink as tea")
-- At the end always say: "🔒 Detailed dosages, chemical compounds, drug interactions, and scientific research are available at Level 1 (Herbalist). Upgrade at ₦5,000/month."
-DO NOT provide: exact dosages, chemical compounds, drug interactions, scientific citations, advanced formulation, links to external resources.`,
-    
-    1: `You are responding to a LEVEL 1 Herbalist.
-Provide FULL expert answers including:
-- Complete ingredient list with specific reasons
-- Detailed preparation and exact dosages
-- Active compounds and how they work
-- Basic warnings and drug interactions
-- End with: "Upgrade to Level 2 for PubMed research citations and advanced chemistry."
-DO NOT provide: PubMed study citations, advanced pharmacology, business formulation.`,
-    
-    2: `You are responding to a LEVEL 2 Practitioner.
-Provide ADVANCED answers including:
-- Everything in Level 1
-- Reference provided PubMed studies with [1], [2], etc.
-- Chemical compounds and biochemical mechanisms in detail
-- Drug interactions and contraindications
-- Clinical dosage recommendations
-- End with: "Upgrade to Level 3 for clinical analysis and business formulation tools."`,
-    
-    3: `You are responding to a LEVEL 3 Specialist.
-Provide CLINICAL expert answers including:
-- Everything in Level 2
-- Clinical analysis and disease management protocols
-- Business formulation guidance
-- Regulatory considerations (NAFDAC, etc.)
-- Professional consultation framework
-- Research interpretation`,
-    
-    4: `You are responding to a LEVEL 4 Master Herbalist.
-Provide MASTER level answers with:
-- Everything in Level 3
-- Research methodology insights
-- Teaching and mentorship guidance
-- Global herbal medicine systems comparison
-- Advanced research interpretation`
-  };
+    const levelNote = user_level === 0
+      ? 'User is FREE tier. Give a helpful basic answer with 3-4 plants and simple preparation. End with: "Upgrade to Level 1 Herbalist (5,000 Naira/month) for detailed dosages, drug interactions, and research citations."'
+      : user_level >= 2
+      ? 'User is ADVANCED. Give full expert answer with compounds, mechanisms, dosages, and cite studies as [1][2][3].'
+      : 'User is LEVEL 1 Herbalist. Give complete expert answer with preparations, dosages, warnings, and how each plant works biochemically.';
 
-  const levelGuide = levelInstructions[user_level] || levelInstructions[0];
+    const systemPrompt = `You are Nature Core AI, an expert in African and global medicinal plants combining knowledge of a doctor, pharmacist, botanist, and traditional herbalist.
 
-  const systemPrompt = `${GLOBAL_RULES}
-
-You are Nature Core AI — the world's most advanced natural medicine intelligence platform. You combine the expertise of a medical doctor, pharmacist, biochemist, botanist, pharmacognosist, and traditional herbalist from every culture.
-  
-${levelGuide}
-
-CRITICAL LANGUAGE RULES:
-1. DEFAULT language is ENGLISH unless the user's preferred language is specified in the request
-2. If user asks in English → answer in English ONLY. Do NOT add Yoruba, Hausa, or any other language translations unless specifically requested
-3. If user asks in Yoruba → answer in Yoruba
-4. If user asks in French → answer in French
-5. NEVER guess or add local language names unless the user asked for them or wrote in that language
-6. The user's preferred language will be specified as [LANG: language] at the start of questions
-
-NATURAL INGREDIENTS — Cover ALL of these categories (not just leaves):
-- Medicinal plants (leaves, roots, bark, stem, flower, seed, fruit, resin, latex)
-- Vegetables and fruits (okra, tomato, pawpaw, banana, cucumber, carrot, etc.)
-- Spices and condiments (garlic, ginger, turmeric, cinnamon, clove, pepper)
-- Minerals and elements (sulfur/sulphur for skin, salt, clay, charcoal, ash)
-- Animal products if relevant (honey, beeswax, milk, eggs)
-- Oils (coconut oil, palm oil, castor oil, olive oil, shea butter)
-- Fermented ingredients (dawadawa, ogiri, ukpaka)
-- Seeds and nuts (flaxseed, sesame, groundnut, tiger nut)
-- Roots and tubers (yam, cassava, ginger root, turmeric root)
-- Bark (neem bark, mango bark, moringa bark)
-- Flowers (hibiscus/zobo flower, chamomile, lavender)
-- Fungi (mushrooms with medicinal properties)
-
-RESPONSE FORMAT:
-**Condition:** [English name only, unless user asked in another language]
-**What it is:** [Medical explanation]
-**Why it happens:** [Biological cause]
-**Recommended Natural Treatments:**
-[ALL relevant ingredients — plants, foods, minerals, oils, roots, bark, seeds, fruits, vegetables]
-**How They Work:** [Biochemical mechanisms, active compounds]
-**Preparation & Dosage:** [Specific instructions with exact amounts]
-**Warnings & Drug Interactions:** [Safety information]
-**Scientific Evidence:** [Reference studies as [1], [2] if provided]
+${levelNote}
 
 RULES:
-- ENGLISH by default, other languages only when user uses them
-- Cover EVERYTHING natural — not just medicinal plants
-- Include vegetables, fruits, spices, minerals, oils in recommendations
-- Give expert-level, specific, actionable answers
-- Never refuse health or natural medicine questions
-- For questions outside natural medicine scope, politely explain: 'Nature Core AI specializes in natural medicine, plants, and health. For [topic], please consult [appropriate expert].'
-- NEVER just stay silent — always give a response
-- Reference provided studies with numbers`;
+- Answer in English by default unless user writes in another language
+- Recommend ALL natural ingredients: plants, foods, spices, roots, barks, seeds, oils, minerals
+- Give specific, expert-level, actionable information
+- NEVER give links or say visit website, give all information directly
+- Structure answer clearly with condition, recommended treatments, how they work, and preparation`;
 
-  const answer = await callGroq([
-    { role: 'system', content: systemPrompt },
-    ...history.slice(-6),
-    { role: 'user', content: `[LANG: ${preferred_language}][COUNTRY: ${country}]\nPlant database: ${JSON.stringify(plants)}${studiesContext}\n\nQuestion: ${question}` }
-  ], 1500);
+    const studiesContext = studies.length > 0
+      ? "\n\nRelevant studies: " + studies.map((s,i) => "[" + (i+1) + "] " + s.title + " (" + s.year + ")").join(". ")
+      : '';
 
-  // Append study links if available
-  let finalAnswer = answer;
-  if(studies.length > 0){
-    finalAnswer += '\n\n**Research Sources:**\n' + studies.map((s,i) => `[${i+1}] ${s.title} — [Read Study](${s.url})`).join('\n');
+    const userMessage = "Plant database: " + JSON.stringify(plants) + "\n\nQuestion: " + question + studiesContext;
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...history.slice(-4),
+      { role: 'user', content: userMessage }
+    ];
+
+    const answer = await callGroq(messages, 1200);
+
+    let finalAnswer = answer;
+    if(studies.length > 0){
+      finalAnswer += "\n\n**Research Sources:**\n" + studies.map((s,i) => "[" + (i+1) + "] " + s.title + " — [Read Study](" + s.url + ")").join("\n");
+    }
+
+    res.json({ answer: finalAnswer, studies });
+  } catch(e) {
+    console.log('Error in /ask:', e.message);
+    res.status(500).json({ error: e.message, answer: 'Sorry, an error occurred. Please try again.' });
   }
-
-  res.json({ answer: finalAnswer, studies });
 });
 
-// Formulation Assistant
 app.post("/formulate", async (req, res) => {
-  const { goal } = req.body;
-  const { data: plants } = await supabase.from("plants").select("name, scientific_name, benefits, skincare_uses, properties, chemistry, preparation");
+  try {
+    const { goal } = req.body;
+    const { data: plants } = await supabase
+      .from("plants")
+      .select("name, scientific_name, benefits, skincare_uses, properties, preparation")
+      .limit(30);
 
-  const formula = await callGroq([
-    { role: 'system', content: 'You are Nature Core AI Formulation Assistant — an expert cosmetic chemist, herbalist, and natural product formulator. Create professional herbal formulations. Always provide: 1) Product name and purpose 2) Complete ingredient list with EXACT percentages totaling 100% 3) Step-by-step manufacturing process with temperatures and times 4) Equipment needed 5) Preservation method and shelf life 6) Packaging recommendations 7) Estimated cost in Naira (materials) 8) Suggested retail price 9) Safety warnings and patch test instructions. Be precise and professional.' },
-    { role: 'user', content: `Available plant database: ${JSON.stringify(plants)}\n\nFormulation request: ${goal}` }
-  ], 1500);
+    const formula = await callGroq([
+      { role: 'system', content: 'You are Nature Core AI Formulation Assistant, an expert cosmetic chemist and herbalist. Create professional herbal formulations with: 1) Product name 2) Complete ingredient list with exact percentages totaling 100% 3) Step-by-step manufacturing process 4) Shelf life and preservation 5) Estimated cost in Naira 6) Safety warnings. Be specific and professional.' },
+      { role: 'user', content: "Available plants: " + JSON.stringify(plants) + "\n\nFormulation request: " + goal }
+    ], 1200);
 
-  res.json({ formula });
+    res.json({ formula });
+  } catch(e) {
+    console.log('Error in /formulate:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
-// Generate AI exam questions for a level
 app.post("/generate-exam", async (req, res) => {
-  const { level_id } = req.body;
-  const { data: plants } = await supabase.from("plants").select("name, scientific_name, benefits, conditions, chemistry, preparation").limit(20);
-
-  const levelTopics = {
-    1: "basic medicinal plants, common conditions they treat, simple preparation methods",
-    2: "plant chemistry, active compounds, advanced formulation, drug interactions",
-    3: "clinical herbalism, pharmacology, disease management, research interpretation",
-    4: "advanced research, business formulation, regulatory compliance, global herbal systems",
-    5: "master level — teaching methodology, research design, certification standards"
-  };
-
-  const topic = levelTopics[level_id] || levelTopics[1];
-  const questionsJson = await callGroq([{
-    role: 'user',
-    content: `Generate 10 multiple choice exam questions about: ${topic}. 
-Use this plant data for context: ${JSON.stringify(plants.slice(0,10))}.
-Return ONLY a JSON array of exactly 10 objects, each with:
-{
-  "question": "Question text here?",
-  "option_a": "First option",
-  "option_b": "Second option", 
-  "option_c": "Third option",
-  "option_d": "Fourth option",
-  "correct_answer": "a",
-  "explanation": "Why this answer is correct"
-}
-Pure JSON array only. No markdown.`
-  }], 1500);
-
   try {
+    const { level_id } = req.body;
+    const { data: plants } = await supabase.from("plants").select("name, scientific_name, benefits, conditions").limit(15);
+
+    const topics = {
+      1: "basic African medicinal plants, common conditions they treat, simple preparation methods",
+      2: "plant chemistry, active compounds, formulation, drug interactions",
+      3: "clinical herbalism, pharmacology, disease management",
+      4: "advanced research, business formulation, regulatory compliance"
+    };
+
+    const questionsJson = await callGroq([{
+      role: 'user',
+      content: `Generate 10 multiple choice exam questions about: ${topics[level_id] || topics[1]}.
+Use this plant data: ${JSON.stringify(plants.slice(0,8))}.
+Return ONLY a JSON array of exactly 10 objects with these exact keys:
+{"question":"text","option_a":"text","option_b":"text","option_c":"text","option_d":"text","correct_answer":"a","explanation":"text"}
+Pure JSON array only. No markdown. No extra text.`
+    }], 1500);
+
     const questions = JSON.parse(questionsJson.replace(/```json|```/g,'').trim());
-    // Save to database
     const toInsert = questions.map(q => ({ ...q, level_id }));
     await supabase.from('exam_questions').insert(toInsert);
     res.json({ questions });
   } catch(e) {
-    res.status(500).json({ error: 'Failed to generate questions' });
+    console.log('Error in /generate-exam:', e.message);
+    res.status(500).json({ error: e.message });
   }
 });
 
-// Submit exam answers
 app.post("/submit-exam", async (req, res) => {
-  const { user_id, level_id, answers, questions } = req.body;
+  try {
+    const { user_id, level_id, answers, questions } = req.body;
+    let correct = 0;
+    const results = questions.map((q, i) => {
+      const isCorrect = answers[i] === q.correct_answer;
+      if(isCorrect) correct++;
+      return { question: q.question, selected: answers[i], correct: q.correct_answer, passed: isCorrect, explanation: q.explanation };
+    });
+    const score = Math.round((correct / questions.length) * 100);
+    const passed = score >= 70;
 
-  let correct = 0;
-  const results = questions.map((q, i) => {
-    const isCorrect = answers[i] === q.correct_answer;
-    if(isCorrect) correct++;
-    return { question: q.question, selected: answers[i], correct: q.correct_answer, passed: isCorrect, explanation: q.explanation };
-  });
+    if(passed){
+      const certId = 'NCAI-' + Date.now() + '-L' + level_id;
+      const { data: profile } = await supabase.from('profiles').select('full_name, email').eq('id', user_id).single();
+      const waitingUntil = new Date();
+      waitingUntil.setDate(waitingUntil.getDate() + 7);
 
-  const score = Math.round((correct / questions.length) * 100);
-  const passed = score >= 70;
+      await supabase.from('certificates').insert([{
+        id: certId,
+        user_id,
+        user_name: profile?.full_name || 'Nature Core Student',
+        user_email: profile?.email || '',
+        level_id,
+        level_name: ['Explorer','Herbalist','Practitioner','Specialist','Master'][level_id] || 'Herbalist',
+        exam_score: score
+      }]);
 
-  if(passed){
-    // Generate certificate
-    const certId = 'NCAI-' + Date.now() + '-L' + level_id;
-    const { data: profile } = await supabase.from('profiles').select('full_name, email').eq('id', user_id).single();
-    const waitingUntil = new Date();
-    waitingUntil.setDate(waitingUntil.getDate() + 7);
+      await supabase.from('user_progress').upsert([{
+        user_id, level_id, status: 'passed', exam_score: score,
+        passed_at: new Date().toISOString(),
+        certificate_id: certId,
+        waiting_until: waitingUntil.toISOString()
+      }]);
 
-    await supabase.from('certificates').insert([{
-      id: certId,
-      user_id,
-      user_name: profile?.full_name || 'Nature Core Student',
-      user_email: profile?.email || '',
-      level_id,
-      level_name: ['Explorer','Herbalist','Practitioner','Specialist','Master'][level_id] || 'Herbalist',
-      exam_score: score,
-      issued_at: new Date().toISOString()
-    }]);
-
-    await supabase.from('user_progress').upsert([{
-      user_id,
-      level_id,
-      status: 'passed',
-      exam_score: score,
-      passed_at: new Date().toISOString(),
-      certificate_id: certId,
-      waiting_until: waitingUntil.toISOString()
-    }]);
-
-    await supabase.from('profiles').update({ level: level_id }).eq('id', user_id);
-
-    res.json({ passed, score, results, certId, waitingUntil });
-  } else {
-    await supabase.from('user_progress').upsert([{
-      user_id, level_id, status: 'failed', exam_score: score, exam_taken_at: new Date().toISOString()
-    }]);
-    res.json({ passed, score, results });
+      await supabase.from('profiles').update({ level: level_id }).eq('id', user_id);
+      res.json({ passed, score, results, certId, waitingUntil });
+    } else {
+      await supabase.from('user_progress').upsert([{
+        user_id, level_id, status: 'failed', exam_score: score,
+        exam_taken_at: new Date().toISOString()
+      }]);
+      res.json({ passed, score, results });
+    }
+  } catch(e) {
+    console.log('Error in /submit-exam:', e.message);
+    res.status(500).json({ error: e.message });
   }
 });
 
-// Get user progress
 app.get("/progress/:user_id", async (req, res) => {
-  const { data } = await supabase.from('user_progress').select('*').eq('user_id', req.params.user_id);
-  res.json(data || []);
+  try {
+    const { data } = await supabase.from('user_progress').select('*').eq('user_id', req.params.user_id);
+    res.json(data || []);
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// Verify certificate
 app.get("/verify/:cert_id", async (req, res) => {
-  const { data } = await supabase.from('certificates').select('*').eq('id', req.params.cert_id).single();
-  if(!data) return res.status(404).json({ valid: false, message: 'Certificate not found' });
-  res.json({ valid: true, certificate: data });
-});
-
-// Plant chemistry from PubChem
-app.get("/chemistry/:plant_name", async (req, res) => {
-  const plantName = req.params.plant_name;
-  const [pubchemData, pubmedData] = await Promise.all([
-    fetchPubChem(plantName),
-    fetchPubMed(plantName + ' chemical compounds active ingredients', 2)
-  ]);
-  res.json({ pubchem: pubchemData, studies: pubmedData });
+  try {
+    const { data } = await supabase.from('certificates').select('*').eq('id', req.params.cert_id).single();
+    if(!data) return res.status(404).json({ valid: false, message: 'Certificate not found' });
+    res.json({ valid: true, certificate: data });
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 const PORT = process.env.PORT || 4000;
