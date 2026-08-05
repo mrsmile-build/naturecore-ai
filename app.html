@@ -319,6 +319,9 @@ clearTimeout(timer);
 plants = await response.json();
 loading.style.display="none";
 loadPlants();
+document.getElementById("plantCount").textContent = plants.length;
+const allConditions = [...new Set(plants.flatMap(p => p.conditions || []))];
+document.getElementById("conditionCount").textContent = allConditions.length;
 
 document.getElementById("plantCount").textContent = plants.length;
 const allConditions = [...new Set(plants.flatMap(p => p.conditions || []))];
@@ -506,7 +509,9 @@ function updatePremiumBadge(){
     const badge = document.createElement("div");
     badge.id = "premiumBadge";
     badge.style.cssText = "display:inline-block;background:#22c55e;color:#000;font-size:11px;font-weight:bold;padding:3px 10px;border-radius:20px;margin-top:8px;";
-    badge.textContent = "🌿 LEVEL 1 — HERBALIST";
+    const levelNames = ["Explorer","Herbalist","Practitioner","Specialist","Master"];
+    const userLevel = userProfile?.level || 1;
+    badge.textContent = "🌿 LEVEL " + userLevel + " — " + (levelNames[userLevel] || "Herbalist").toUpperCase();
     if(header) header.parentNode.insertBefore(badge, header.nextSibling);
   } else {
     const badge = document.createElement("div");
