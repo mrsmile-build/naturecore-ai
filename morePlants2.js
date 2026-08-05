@@ -31,7 +31,7 @@ async function generatePlant(name){
     method:'POST',
     headers:{'Authorization':`Bearer ${GROQ_KEY}`,'Content-Type':'application/json'},
     body:JSON.stringify({
-      model:'llama-3.1-8b-instant',
+      model:'llama3-70b-8192',
       max_tokens:500,
       messages:[{role:'user',content:`Return ONLY valid JSON for this natural medicine ingredient: "${name}". Fields: name(string), scientific_name(string), type(string like Leaf/Root/Seed/Oil/Mineral/Fruit/Bark/Resin/Food), category(string like Medicine/Skincare/Nutrition), origin(string), properties(array of 3 strings), benefits(array of 3 strings), conditions(array of 3 plain text strings - NOT JSON objects), skincare_uses(array of 2 strings), preparation(array of 2 strings), warnings(array of 1 string), chemistry({compounds:["compound1","compound2"],class:"string"}), level("free" or "premium"). IMPORTANT: conditions must be plain text strings, not JSON objects. Pure JSON only.`}]
     })
