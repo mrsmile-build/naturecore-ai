@@ -319,9 +319,13 @@ clearTimeout(timer);
 plants = await response.json();
 loading.style.display="none";
 loadPlants();
-document.getElementById("plantCount").textContent = plants.length;
-const allConditions = [...new Set(plants.flatMap(p => p.conditions || []))];
-document.getElementById("conditionCount").textContent = allConditions.length;
+setTimeout(() => {
+  const pc = document.getElementById("plantCount");
+  const cc = document.getElementById("conditionCount");
+  if(pc) pc.textContent = plants.length;
+  const allConditions = [...new Set(plants.flatMap(p => p.conditions || []))];
+  if(cc) cc.textContent = allConditions.length;
+}, 500);
 
 document.getElementById("plantCount").textContent = plants.length;
 const allConditions = [...new Set(plants.flatMap(p => p.conditions || []))];
@@ -803,7 +807,7 @@ function renderGuestMenu(){
   const el = document.createElement("div");
   el.id = "ncaiUserMenu";
   el.style.cssText = "position:fixed;top:14px;right:14px;z-index:900;";
-  el.innerHTML = `<a href="auth.html" style="background:#22c55e;color:#000;padding:10px 18px;border-radius:10px;font-weight:bold;font-size:13px;text-decoration:none;display:inline-block;">Sign In</a>`;
+  el.innerHTML = `<a href="/naturecore-ai/auth.html" style="background:#22c55e;color:#000;padding:10px 18px;border-radius:10px;font-weight:bold;font-size:13px;text-decoration:none;display:inline-block;">Sign In</a>`;
   document.body.appendChild(el);
 }
 
@@ -913,7 +917,7 @@ function openSettings(){
     document.getElementById("stgUpgradeBtn").innerHTML = isPremium ? "" :
       `<button onclick="closeSettings();showPaywall();" style="width:100%;background:#22c55e;color:#000;border:none;border-radius:10px;padding:12px;font-weight:bold;cursor:pointer;font-size:14px;">⬆️ Upgrade to Level 1 — ₦5,000/month</button>`;
   } else {
-    window.location.href = "auth.html";
+    window.location.href = "/naturecore-ai/auth.html";
   }
 }
 
