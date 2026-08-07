@@ -150,12 +150,17 @@ async function init(){
     return;
   }
   currentUser = session.user;
-  const { data: profile } = await sb.from("profiles").select("*").eq("id", currentUser.id).single();
-  userProfile = profile;
-  const { data: progress } = await sb.from("user_progress").select("*").eq("user_id", currentUser.id);
-  userProgress = progress || [];
-  renderUserMenu();
-  renderLevels();
+  try {
+    const { data: profile } = await sb.from("profiles").select("*").eq("id", currentUser.id).single();
+    userProfile = profile;
+    const { data: progress } = await sb.from("user_progress").select("*").eq("user_id", currentUser.id);
+    userProgress = progress || [];
+    renderUserMenu();
+    renderLevels();
+  } catch(e) {
+    document.getElementById("levelsContainer").innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;">Error loading academy: ${e.message}<br><button onclick="location.reload()" class="btn btn-primary" style="margin-top:16px;">Retry</button></div>`;
+    console.log('Academy init error:', e);
+  }
 }
 
 function getProgress(levelId){ return userProgress.find(p => p.level_id === levelId); }
@@ -186,12 +191,14 @@ function renderLevels(){
     } else if(isAlreadyUnlocked && !isPassed){
       actions = `<span class="cert-badge">✅ Access Granted</span> <a href="app.html" class="btn btn-primary" style="margin-left:10px;">Open App →</a>`;
     } else if(isPassed){
-      actions = `<span class="cert-badge">🏆 ${progress.certificate_id}</span>`;
-      if(isWaiting){
+      actions = progress?.certificate_id
+        ? `<span class="cert-badge">🏆 ${progress.certificate_id}</span>`
+        : `<span class="cert-badge">✅ Access Granted</span>`;
+      if(isWaiting && progress?.waiting_until){
         const days = Math.ceil((new Date(progress.waiting_until) - new Date()) / (1000*60*60*24));
         actions += `<span style="font-size:13px;color:var(--muted);margin-left:12px;">Next level unlocks in ${days} day${days !== 1 ? 's' : ''}</span>`;
       } else {
-        actions += `<button class="btn btn-primary" onclick="startExam(${level.id + 1})">Start Level ${level.id + 1} →</button>`;
+        actions += ` <button class="btn btn-primary" onclick="startExam(${level.id + 1})" style="margin-left:10px;">Start Level ${level.id + 1} →</button>`;
       }
     } else if(isCurrentLevel || level.id <= userLevel + 1){
       if(!progress){
