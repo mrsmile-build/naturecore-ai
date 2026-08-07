@@ -196,10 +196,45 @@ app.post("/generate-exam", async (req, res) => {
 Use this plant data: ${JSON.stringify(plants.slice(0,8))}.
 Return ONLY a JSON array of exactly 10 objects with these exact keys:
 {"question":"text","option_a":"text","option_b":"text","option_c":"text","option_d":"text","correct_answer":"a","explanation":"text"}
-Pure JSON array only. No markdown. No extra text.`
+
+CRITICAL RULES:
+- Do NOT use apostrophes or single quotes anywhere in the text (write "what is" not "what's", write "plant is" not "plant's")
+- Do NOT use double quotes inside the text values
+- Keep each explanation under 15 words
+- Pure JSON array only, no markdown, no extra text, no trailing commas`
     }], 1500);
 
-    const questions = JSON.parse(questionsJson.replace(/```json|```/g,'').trim());
+    function repairJson(str){
+  return str
+    .replace(/```json|```/g,'')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/,(\s*[\]\}])/g, '$1')
+    .trim();
+}
+let cleaned = repairJson(questionsJson);
+    // Try to extract just the array if there's extra text
+    const arrStart = cleaned.indexOf('[');
+    const arrEnd = cleaned.lastIndexOf(']');
+    if(arrStart !== -1 && arrEnd !== -1){
+      cleaned = cleaned.substring(arrStart, arrEnd + 1);
+    }
+    let questions;
+    try {
+      questions = JSON.parse(cleaned);
+    } catch(parseErr) {
+      // Retry once with explicit re-request
+      console.log('First parse failed, retrying exam generation...');
+      const retryJson = await callGroq([{
+        role: 'user',
+        content: `Return ONLY a valid JSON array of 10 multiple choice questions about medicinal plants. Each object must have exactly these keys: question, option_a, option_b, option_c, option_d, correct_answer, explanation. Use simple ASCII quotes only, no special characters. Pure JSON array, nothing else.`
+      }], 1500);
+      let retryCleaned = repairJson(retryJson);
+      const rStart = retryCleaned.indexOf('[');
+      const rEnd = retryCleaned.lastIndexOf(']');
+      if(rStart !== -1 && rEnd !== -1) retryCleaned = retryCleaned.substring(rStart, rEnd + 1);
+      questions = JSON.parse(retryCleaned);
+    }
     const toInsert = questions.map(q => ({ ...q, level_id }));
     await supabase.from('exam_questions').insert(toInsert);
     res.json({ questions });
