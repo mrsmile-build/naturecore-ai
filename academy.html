@@ -165,10 +165,11 @@ function renderLevels(){
   const container = document.getElementById("levelsContainer");
   container.innerHTML = LEVELS.map(level => {
     const progress = getProgress(level.id);
-    const isPassed = progress?.status === 'passed';
+    const isPassed = progress?.status === 'passed' || level.id < userLevel;
     const isWaiting = progress?.status === 'passed' && progress?.waiting_until && new Date(progress.waiting_until) > new Date();
     const isCurrentLevel = level.id === userLevel;
-    const isLocked = level.id > userLevel + 1;
+    const isLocked = level.id > userLevel + 1 && level.id !== userLevel;
+    const isAlreadyUnlocked = level.id <= userLevel;
     const isFree = level.id === 0;
 
     let badge = '';
@@ -182,6 +183,8 @@ function renderLevels(){
     let actions = '';
     if(isFree){
       actions = `<a href="app.html" class="btn btn-primary">Open App →</a>`;
+    } else if(isAlreadyUnlocked && !isPassed){
+      actions = `<span class="cert-badge">✅ Access Granted</span> <a href="app.html" class="btn btn-primary" style="margin-left:10px;">Open App →</a>`;
     } else if(isPassed){
       actions = `<span class="cert-badge">🏆 ${progress.certificate_id}</span>`;
       if(isWaiting){
