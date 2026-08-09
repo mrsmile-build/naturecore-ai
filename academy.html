@@ -346,6 +346,30 @@ function renderResults(data){
   if(passed){ userProgress = userProgress.filter(p => p.level_id !== currentExam.levelId); userProgress.push({level_id:currentExam.levelId,status:'passed',certificate_id:certId,exam_score:score,waiting_until:waitingUntil}); }
 }
 
+
+function downloadCert(){
+  const cert = document.getElementById("certToDownload");
+  const html = `<!DOCTYPE html><html><head><title>Nature Core AI Certificate</title>
+  <style>body{font-family:Arial,sans-serif;background:#020617;color:white;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}
+  ${document.querySelector('style').textContent}</style></head><body>${cert.outerHTML}</body></html>`;
+  const blob = new Blob([html], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'NatureCoreAI-Certificate.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function shareCert(certId){
+  const link = window.location.origin + '/naturecore-ai/verify.html?id=' + certId;
+  navigator.clipboard.writeText(link).then(()=>{
+    alert('Verification link copied!\n\n' + link);
+  }).catch(()=>{
+    prompt('Copy this verification link:', link);
+  });
+}
+
 function closeExam(){ document.getElementById("examModal").style.display = "none"; }
 
 function unlockLevel(levelId){

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify Certificate — Nature Core AI</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--green:#22c55e;--dark:#020617;--card:#0f172a;--border:#1e293b;--text:#cbd5e1;--muted:#64748b;}
+body{font-family:"Segoe UI",Arial,sans-serif;background:var(--dark);color:white;min-height:100vh;}
+nav{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);}
+.logo{font-size:18px;font-weight:bold;color:var(--green);text-decoration:none;}
+.logo span{color:white;}
+.container{max-width:500px;margin:60px auto;padding:0 20px;}
+h1{font-size:26px;font-weight:800;margin-bottom:8px;text-align:center;}
+p.sub{color:var(--muted);text-align:center;margin-bottom:32px;}
+.input-row{display:flex;gap:10px;margin-bottom:24px;}
+input{flex:1;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:white;font-size:15px;outline:none;}
+input:focus{border-color:var(--green);}
+button{padding:14px 22px;background:var(--green);color:#000;border:none;border-radius:12px;font-weight:bold;cursor:pointer;font-size:15px;}
+#result{margin-top:20px;}
+.cert-display{background:linear-gradient(135deg,#0f172a,#1e293b);border:2px solid var(--green);border-radius:16px;padding:32px;text-align:center;}
+.cert-display h3{font-size:22px;color:var(--green);margin-bottom:8px;}
+.cert-display .cert-name{font-size:26px;font-weight:800;margin:12px 0;}
+.cert-display .cert-level{font-size:15px;color:var(--muted);margin-bottom:12px;}
+.cert-display .cert-id{font-size:12px;color:var(--muted);font-family:monospace;margin-top:12px;}
+.error-box{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:20px;text-align:center;color:#fca5a5;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">Nature<span>Core</span> AI</a>
+</nav>
+<div class="container">
+  <h1>🔍 Verify a Certificate</h1>
+  <p class="sub">Enter a Nature Core AI certificate ID to confirm it's authentic.</p>
+  <div class="input-row">
+    <input id="certId" placeholder="e.g. NCAI-1786266189124-L2" onkeypress="if(event.key==='Enter') verify()">
+    <button onclick="verify()">Verify</button>
+  </div>
+  <div id="result"></div>
+</div>
+<script>
+async function verify(){
+  const id = document.getElementById("certId").value.trim();
+  const result = document.getElementById("result");
+  if(!id){ result.innerHTML = '<div class="error-box">Please enter a certificate ID</div>'; return; }
+  result.innerHTML = '<p style="text-align:center;color:var(--muted);">Checking...</p>';
+  try{
+    const res = await fetch("https://naturecore-ai.onrender.com/verify/" + encodeURIComponent(id));
+    const data = await res.json();
+    if(data.valid){
+      const c = data.certificate;
+      result.innerHTML = `
+        <div class="cert-display">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">✅ VERIFIED — NATURE CORE AI CERTIFIED</div>
+          <h3>Certificate of Achievement</h3>
+          <div class="cert-name">${c.user_name}</div>
+          <div class="cert-level">Level ${c.level_id} — ${c.level_name}</div>
+          <div style="color:var(--green);font-size:15px;">Score: ${c.exam_score}%</div>
+          <div class="cert-id">ID: ${c.id}</div>
+          <div class="cert-id">Issued: ${new Date(c.issued_at).toLocaleDateString()}</div>
+        </div>`;
+    } else {
+      result.innerHTML = '<div class="error-box">❌ Certificate not found. Please check the ID and try again.</div>';
+    }
+  }catch(e){
+    result.innerHTML = '<div class="error-box">❌ Could not verify. Try again.</div>';
+  }
+}
+</script>
+</body>
+</html>
