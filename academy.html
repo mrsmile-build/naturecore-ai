@@ -352,17 +352,6 @@ function renderResults(data){
 }
 
 
-</script>
-</head><body>${cert.outerHTML}</body></html>`;
-  const blob = new Blob([html], {type: 'text/html'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'NatureCoreAI-Certificate.html';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 function downloadCert(){
   const cert = document.getElementById("certToDownload");
   const styleTag = document.querySelector("style").textContent;
