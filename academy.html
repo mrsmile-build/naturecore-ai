@@ -315,13 +315,17 @@ function renderResults(data){
       <div style="color:var(--muted);font-size:14px;margin-bottom:24px;">${passed ? `You've earned the ${levelName} certificate!` : 'You need 70% to pass. Review and try again.'}</div>
       
       ${passed && certId ? `
-      <div class="cert-display">
+      <div class="cert-display" id="certToDownload">
         <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">NATURE CORE AI CERTIFIED</div>
         <h3>Certificate of Achievement</h3>
         <div class="cert-name">${userProfile?.full_name || 'Nature Core Student'}</div>
         <div class="cert-level">Level ${currentExam.levelId} — ${levelName}</div>
         <div style="color:var(--green);font-size:15px;margin-bottom:12px;">Score: ${score}%</div>
         <div class="cert-id">ID: ${certId}</div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;margin:16px 0;flex-wrap:wrap;">
+        <button onclick="downloadCert()" class="btn btn-secondary">📥 Download Certificate</button>
+        <button onclick="shareCert('${certId}')" class="btn btn-secondary">🔗 Copy Verify Link</button>
       </div>
       <p style="font-size:13px;color:var(--muted);">Next level unlocks in 7 days. Keep learning!</p>` : ''}
       
