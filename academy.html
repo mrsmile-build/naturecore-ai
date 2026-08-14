@@ -77,6 +77,7 @@ nav{display:flex;justify-content:space-between;align-items:center;padding:16px 2
 .cert-display .cert-level{font-size:16px;color:var(--muted);margin-bottom:16px;}
 .cert-display .cert-id{font-size:12px;color:var(--muted);font-family:monospace;}
 </style>
+<script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
 <body>
 
@@ -351,16 +352,26 @@ function renderResults(data){
 }
 
 
-function downloadCert(){
-  const cert = document.getElementById("certToDownload");
-  const html = `<!DOCTYPE html><html><head><title>Nature Core AI Certificate</title>
-  <style>body{font-family:Arial,sans-serif;background:#020617;color:white;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}
-  ${document.querySelector('style').textContent}</style></head><body>${cert.outerHTML}</body></html>`;
+</script>
+</head><body>${cert.outerHTML}</body></html>`;
   const blob = new Blob([html], {type: 'text/html'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = 'NatureCoreAI-Certificate.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadCert(){
+  const cert = document.getElementById("certToDownload");
+  const styleTag = document.querySelector("style").textContent;
+  const html = "<!DOCTYPE html><html><head><title>Nature Core AI Certificate</title><style>body{font-family:Arial,sans-serif;background:#020617;color:white;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}" + styleTag + "</style></head><body>" + cert.outerHTML + "</body></html>";
+  const blob = new Blob([html], {type: "text/html"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "NatureCoreAI-Certificate.html";
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -377,7 +388,40 @@ function shareCert(certId){
 function closeExam(){ document.getElementById("examModal").style.display = "none"; }
 
 function unlockLevel(levelId){
-  alert(`Payment for Level ${levelId} coming soon! We are integrating Paystack. Check back shortly.`);
+  if(!currentUser){ window.location.href = "auth.html"; return; }
+  const level = LEVELS[levelId];
+  const email = currentUser.email;
+  const handler = PaystackPop.setup({
+    key: "pk_test_9c292300d5642c1a160a82de56e2a4ad93bf941a",
+    email: email,
+    amount: level.price * 100,
+    currency: "NGN",
+    ref: "NCAI_L" + levelId + "_" + Date.now(),
+    callback: function(response){
+      handlePaymentSuccess(levelId, level, response.reference);
+    },
+    onClose: function(){}
+  });
+  handler.openIframe();
+}
+
+async function handlePaymentSuccess(levelId, level, ref){
+  const updates = { level: levelId };
+  if(level.type === 'monthly'){
+    updates.is_premium = true;
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + 30);
+    updates.premium_expiry = expiry.toISOString();
+  }
+  await sb.from("profiles").update(updates).eq("id", currentUser.id);
+  await sb.from("user_progress").upsert([{
+    user_id: currentUser.id,
+    level_id: levelId,
+    status: 'passed',
+    paystack_ref: ref
+  }]);
+  alert("Payment successful! Level " + levelId + " (" + level.name + ") unlocked.");
+  location.reload();
 }
 
 init();
