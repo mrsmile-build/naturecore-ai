@@ -275,17 +275,7 @@ function sendContactMsg(){
     const details = msg;
     setTimeout(()=>{ addContactMsg('bot', 'Sending your message...'); }, 600);
     const waMsg = encodeURIComponent(
-      '🌿 NATURE CORE AI MESSAGE
-
-Category: '+userCategory+'
-Name: '+userName+'
-Email: '+userEmail+'
-
-Message:
-'+details+'
-
----
-From naturecore-ai contact widget'
+      "🌿 NATURE CORE AI MESSAGE\n\nCategory: " + userCategory + "\nName: " + userName + "\nEmail: " + userEmail + "\n\nMessage:\n" + details + "\n\n---\nFrom naturecore-ai contact widget"
     );
     setTimeout(()=>{
       addContactMsg('bot', '✅ Message sent! We will contact you at <strong>'+userEmail+'</strong> within 24 hours. Thank you 🌿');
