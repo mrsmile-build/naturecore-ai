@@ -376,7 +376,7 @@ card.innerHTML=`
 ${item.scientific_name}
 </p>
 
-${item.conditions.map(condition=>`
+${(item.conditions || []).map(condition=>`
 <span class="tag">${condition}</span>
 `).join("")}
 
