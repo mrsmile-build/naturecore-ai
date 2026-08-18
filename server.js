@@ -16,19 +16,36 @@ let keyIndex = 0;
 function getGroqKey(){ const k = GROQ_KEYS[keyIndex % GROQ_KEYS.length]; keyIndex++; return k; }
 
 async function callGroq(messages, maxTokens = 1000) {
-  try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${getGroqKey()}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'openai/gpt-oss-20b', max_tokens: maxTokens, messages })
-    });
-    const data = await response.json();
-    if(data.error) throw new Error(data.error.message);
-    return data.choices?.[0]?.message?.content || '';
-  } catch(e) {
-    console.log('Groq error:', e.message);
-    return '';
+  const maxAttempts = GROQ_KEYS.length * 2;
+  let lastError = '';
+  for(let attempt = 0; attempt < maxAttempts; attempt++){
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${getGroqKey()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'openai/gpt-oss-20b', max_tokens: maxTokens, messages })
+      });
+      const data = await response.json();
+      if(data.error){
+        lastError = data.error.message;
+        console.log(`Groq attempt ${attempt+1}/${maxAttempts} failed:`, lastError);
+        if(data.error.code === 'rate_limit_exceeded' || response.status === 429){
+          await new Promise(r => setTimeout(r, 500));
+          continue;
+        }
+        continue;
+      }
+      const content = data.choices?.[0]?.message?.content;
+      if(content) return content;
+      lastError = 'Empty response from model';
+      console.log(`Groq attempt ${attempt+1}/${maxAttempts}: empty content`);
+    } catch(e) {
+      lastError = e.message;
+      console.log(`Groq attempt ${attempt+1}/${maxAttempts} exception:`, e.message);
+    }
   }
+  console.log('All Groq attempts exhausted. Last error:', lastError);
+  return '';
 }
 
 async function fetchPubMed(query, maxResults = 3) {
@@ -87,7 +104,7 @@ app.get("/nature", async (req, res) => {
           const plantJson = await callGroq([{
             role: 'user',
             content: `Based on: ${wiki}\n\nReturn ONLY valid JSON for plant "${search}": {name, scientific_name, type, category, origin, properties(array 3), benefits(array 3), conditions(array 3), skincare_uses(array 2), preparation(array 2), warnings(array 1), chemistry({compounds:[2 strings],class:string}), level("free")}. Pure JSON only.`
-          }], 600);
+          }], 1500);
           const parsed = JSON.parse(plantJson.replace(/```json|```/g,'').trim());
           await supabase.from('plants').insert([parsed]);
           return res.json([parsed]);
@@ -144,7 +161,7 @@ RULES:
       { role: 'user', content: userMessage }
     ];
 
-    const answer = await callGroq(messages, 1200);
+    const answer = await callGroq(messages, 2500);
 
     let finalAnswer = answer;
     if(studies.length > 0){
@@ -169,7 +186,7 @@ app.post("/formulate", async (req, res) => {
     const formula = await callGroq([
       { role: 'system', content: 'You are Nature Core AI Formulation Assistant, an expert cosmetic chemist and herbalist. Create professional herbal formulations with: 1) Product name 2) Complete ingredient list with exact percentages totaling 100% 3) Step-by-step manufacturing process 4) Shelf life and preservation 5) Estimated cost in Naira 6) Safety warnings. Be specific and professional.' },
       { role: 'user', content: "Available plants: " + JSON.stringify(plants) + "\n\nFormulation request: " + goal }
-    ], 1200);
+    ], 2500);
 
     res.json({ formula });
   } catch(e) {
@@ -202,7 +219,7 @@ CRITICAL RULES:
 - Do NOT use double quotes inside the text values
 - Keep each explanation under 15 words
 - Pure JSON array only, no markdown, no extra text, no trailing commas`
-    }], 1500);
+    }], 3000);
 
     function repairJson(str){
   return str
@@ -228,7 +245,7 @@ let cleaned = repairJson(questionsJson);
       const retryJson = await callGroq([{
         role: 'user',
         content: `Return ONLY a valid JSON array of 10 multiple choice questions about medicinal plants. Each object must have exactly these keys: question, option_a, option_b, option_c, option_d, correct_answer, explanation. Use simple ASCII quotes only, no special characters. Pure JSON array, nothing else.`
-      }], 1500);
+      }], 3000);
       let retryCleaned = repairJson(retryJson);
       const rStart = retryCleaned.indexOf('[');
       const rEnd = retryCleaned.lastIndexOf(']');
