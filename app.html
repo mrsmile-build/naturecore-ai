@@ -994,8 +994,15 @@ async function getFormulation(){
         body:JSON.stringify({goal})
       });
       if(!res.ok) throw new Error("Server error " + res.status);
-      const data = await res.json();
-      if(result) result.innerHTML = "🧪 " + (data.formula || "No formula returned")
+      const rawText = await res.text();
+      let data;
+      try{ data = JSON.parse(rawText); }
+      catch(parseErr){
+        if(result) result.innerHTML = "<span style='color:#ef4444'>Parse error: " + parseErr.message + "<br>Raw: " + rawText.substring(0,300) + "</span>";
+        if(btn){ btn.textContent = "Create"; btn.disabled = false; }
+        return;
+      }
+      if(result) result.innerHTML = "🧪 " + (data.formula || ("No formula returned. Raw response: " + rawText.substring(0,300)))
         .replace(/\*\*(.*?)\*\*/g,"<strong style='color:#22c55e'>$1</strong>")
         .replace(/\n/g,"<br>");
     }catch(e){
