@@ -10,7 +10,7 @@ async function generatePlant(name){
     method:'POST',
     headers:{'Authorization':`Bearer ${GROQ_KEY}`,'Content-Type':'application/json'},
     body:JSON.stringify({
-      model:'llama-3.1-8b-instant',
+      model:'openai/gpt-oss-20b',
       max_tokens:600,
       messages:[{role:'user',content:`Return ONLY valid JSON for medicinal plant: ${name}. Fields: name(string), scientific_name(string), type(string), category(string), origin(string), properties(array of 3), benefits(array of 3), conditions(array of 3), skincare_uses(array of 2), preparation(array of 2), warnings(array of 1), chemistry({compounds:[2 strings],class:string}), level("free" or "premium"). No markdown. Pure JSON only.`}]
     })
